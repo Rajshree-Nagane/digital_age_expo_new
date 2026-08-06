@@ -310,6 +310,7 @@ export function Navbar({
   };
 
   return (
+    <>
     <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-surface-1/90 backdrop-blur-xl">
 
       {/* =====================================================
@@ -470,21 +471,6 @@ export function Navbar({
                   <ChevronRight className="h-3.5 w-3.5 text-pink-500 opacity-0 group-hover/link:opacity-100" />
                 </Link>
 
-                <Link
-                  href="/dashboard/security"
-                  className="group/link flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold text-zinc-300 hover:bg-white/5 hover:text-white"
-                >
-                  My Security Details
-                  <ChevronRight className="h-3.5 w-3.5 text-pink-500 opacity-0 group-hover/link:opacity-100" />
-                </Link>
-
-                <Link
-                  href="/dashboard/schedule"
-                  className="group/link flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold text-zinc-300 hover:bg-white/5 hover:text-white"
-                >
-                  My Schedule
-                  <ChevronRight className="h-3.5 w-3.5 text-pink-500 opacity-0 group-hover/link:opacity-100" />
-                </Link>
 
                 <div className="mt-2 border-t border-white/5 pt-2">
                   <LogoutButton className="block w-full rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-zinc-300 transition hover:bg-red-500/10 hover:text-red-400" />
@@ -493,17 +479,7 @@ export function Navbar({
             </div>
           )}
 
-          {/* FREE TICKET */}
-          {/* <Link
-            href="/free-ticket"
-            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-purple to-brand-pink px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white shadow-lg transition-all hover:scale-105 hover:shadow-pink-500/20 sm:px-4 sm:text-xs"
-          >
-            <Ticket className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">
-              Free Ticket
-            </span>
-          </Link> */}
-
+        
           {/* MOBILE MENU BUTTON */}
           <button
             type="button"
@@ -525,6 +501,12 @@ export function Navbar({
       {/* =====================================================
           MOBILE SIDE DRAWER
       ===================================================== */}
+    </header>
+
+    {/* Rendered as a sibling of <header>, not a descendant — <header> has
+        backdrop-blur-xl, and backdrop-filter creates a new containing block for
+        position:fixed descendants, which was pinning this drawer (and its backdrop)
+        to the header's own small box instead of the viewport. */}
       {drawerOpen && (
         <div className="fixed inset-0 z-[60] flex lg:hidden">
 
@@ -848,6 +830,6 @@ export function Navbar({
           </div>
         </div>
       )}
-    </header>
+    </>
   );
 }
