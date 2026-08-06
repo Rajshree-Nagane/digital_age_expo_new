@@ -1,0 +1,375 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Theme Brand Colors requested by user: var(--color-brand-purple) (Indigo) & var(--color-brand-pink) (Medium Violet Red) */
+  --color-brand-pink: #C71585;
+  --color-brand-purple: #4B0082;
+  
+  /* Deep black dark mode overrides for crystal-clear dark aesthetic */
+  --color-zinc-950: #05030a;
+  --color-zinc-900: #0a0614;
+  --color-zinc-850: rgba(255, 255, 255, 0.04);
+  --color-zinc-800: rgba(255, 255, 255, 0.07);
+  --color-zinc-700: rgba(255, 255, 255, 0.12);
+  --color-zinc-600: rgba(255, 255, 255, 0.25);
+  --color-zinc-500: rgba(255, 255, 255, 0.45);
+  --color-zinc-400: rgba(255, 255, 255, 0.7);
+  --color-zinc-300: rgba(255, 255, 255, 0.88);
+  --color-zinc-200: #f4f4f5;
+  --color-zinc-100: #fafafa;
+  
+  /* --- Centralized design-system colors (extracted from hardcoded values across the app) --- */
+  --color-brand-violet: #6A0DAD;
+  --color-brand-pink-rgb: 199 21 133;
+  --color-brand-purple-rgb: 75 0 130;
+  --color-brand-purple-hover: #3b0066;
+  --color-brand-purple-deep: #3a0066;
+  --color-zinc-950-rgb: 5 3 10;
+  --color-indigo-950-rgb: 30 27 75;
+
+  /* Dark surface backgrounds (headers, sidebars, cards, full-bleed sections) */
+  --color-surface-1: #0A0514;
+  --color-surface-1-rgb: 10 5 20;
+  --color-surface-2: #0C0618;
+  --color-surface-4: #050505;
+
+  /* Generic status feedback (active/inactive toggles) */
+  --color-status-active: #5cb85c;
+  --color-status-inactive: #d9534f;
+  --color-status-active-bg: rgba(92, 184, 92, 0.1);
+  --color-status-inactive-bg: rgba(217, 83, 79, 0.1);
+
+  /* Embedded "share widget" preview colors (StandAssetsManager) */
+  --color-widget-primary: #1ca2d9;
+  --color-widget-primary-hover: #158bbd;
+  --color-widget-surface: #ebebeb;
+  --color-widget-warning: #b9811a;
+  --color-widget-warning-hover: #9e6d15;
+  --color-widget-warning-border: #8a5f11;
+
+  /* Misc one-off UI accents */
+  --color-ink: #18181b;
+  --color-muted-text: #71717a;
+  --color-warm-bg: #FAF0E6;
+  --color-warm-border: #dbb593;
+  --color-warm-border-rgb: 219 181 147;
+  --color-warm-text: #7c5836;
+  --color-marker-default: #ff1f6d;
+  --color-cyan-accent: #00D1FF;
+  --color-scrim: rgba(0, 0, 0, 0.62);
+  --color-text-soft: #c9c9c9;
+  --color-border-glass: rgba(255, 255, 255, 0.08);
+  --color-border-input: rgba(255, 255, 255, 0.15);
+
+  /* Dashboard donut/pie chart palette (see src/components/cp/dashboard/statusColors.ts) */
+  --color-chart-good: #0ca30c;
+  --color-chart-warning: #fab219;
+  --color-chart-critical: #d03b3b;
+  --color-chart-other: #6b6b68;
+  --color-chart-series-1: #3987e5;
+  --color-chart-series-2: #d95926;
+  --color-chart-series-3: #199e70;
+  --color-chart-series-4: #c98500;
+  --color-chart-series-5: #d55181;
+  --color-chart-series-6: #008300;
+  --color-chart-series-7: #9085e9;
+  --color-chart-series-8: #e66767;
+  --color-chart-grid: rgba(255, 255, 255, 0.06);
+
+  /* RGB-component companions for colors that are also used with a variable alpha (rgba()) */
+  --color-indigo-500-rgb: 99 102 241;
+  --color-pink-500-rgb: 236 72 153;
+  --color-slate-900-rgb: 15 23 42;
+  --color-violet-900-rgb: 76 29 149;
+
+  /* Smooth transitions */
+  --animate-fade-in: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-up: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(var(--color-brand-pink-rgb), 0.25), 0 0 40px rgba(var(--color-brand-purple-rgb), 0.2);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(var(--color-brand-pink-rgb), 0.45), 0 0 60px rgba(var(--color-brand-purple-rgb), 0.35);
+  }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-zinc-950) !important;
+  color: var(--color-white);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+/* Base glowing background for main containers with var(--color-brand-purple) & var(--color-brand-pink) radial glows on black */
+.main-glow-bg {
+  background: 
+    radial-gradient(circle at 15% 15%, rgba(var(--color-brand-pink-rgb), 0.15) 0%, transparent 45%),
+    radial-gradient(circle at 85% 85%, rgba(var(--color-brand-purple-rgb), 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(var(--color-brand-pink-rgb), 0.05) 0%, transparent 60%),
+    var(--color-zinc-950);
+  background-attachment: fixed;
+}
+
+/* Section transition class for entrance animations */
+.section-transition {
+  animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Beautiful glassmorphism card */
+.glass-panel {
+  background: rgba(var(--color-surface-1-rgb), 0.75) !important;
+  border: 1px solid var(--color-border-glass) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(var(--color-brand-pink-rgb), 0.1) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-panel:hover {
+  border-color: rgba(var(--color-brand-pink-rgb), 0.25) !important;
+  box-shadow: 0 16px 40px -10px rgba(var(--color-brand-purple-rgb), 0.3), 0 0 20px rgba(var(--color-brand-pink-rgb), 0.15) !important;
+}
+
+/* Button & interactive highlights matching var(--color-brand-purple) and var(--color-brand-pink) */
+.btn-sophisticated {
+  background: linear-gradient(135deg, var(--color-brand-purple), var(--color-brand-pink)) !important;
+  box-shadow: 0 8px 24px rgba(var(--color-brand-pink-rgb), 0.3) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--color-white) !important;
+  font-weight: 700;
+}
+
+.btn-sophisticated:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 12px 32px rgba(var(--color-brand-pink-rgb), 0.5), 0 0 15px rgba(var(--color-brand-purple-rgb), 0.4) !important;
+  filter: brightness(1.1);
+}
+
+/* Brand gradient buttons */
+.btn-brand-gradient {
+  background-size: 200% 200%;
+  background-image: linear-gradient(135deg, var(--color-brand-purple) 0%, var(--color-brand-pink) 50%, var(--color-brand-purple) 100%) !important;
+  box-shadow: 0 4px 18px rgba(var(--color-brand-pink-rgb), 0.35);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--color-white) !important;
+}
+
+.btn-brand-gradient:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 10px 30px rgba(var(--color-brand-pink-rgb), 0.55), 0 0 20px rgba(var(--color-brand-purple-rgb), 0.4);
+  background-position: 100% 0;
+}
+
+.btn-brand-gradient:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Standard headers/logos with glowing var(--color-brand-pink) & var(--color-brand-purple) gradient text */
+.sophisticated-gradient-text {
+  background: linear-gradient(135deg, var(--color-white) 0%, var(--color-pink-400) 40%, var(--color-brand-pink) 70%, var(--color-purple-500) 100%);
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+.brand-gradient-text {
+  background: linear-gradient(135deg, var(--color-pink-400) 0%, var(--color-brand-pink) 50%, var(--color-purple-500) 100%);
+  -webkit-background-clip: text !important;
+  background-clip: text;
+  color: transparent !important;
+}
+
+/* Custom Image Hover & Glow Effects */
+.fancy-image-container {
+  overflow: hidden;
+  position: relative;
+  border-radius: 1rem;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fancy-image-container img {
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fancy-image-container:hover img {
+  transform: scale(1.08) rotate(0.5deg);
+  filter: brightness(1.1) contrast(1.05);
+}
+
+.fancy-image-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(var(--color-zinc-950-rgb), 0.8), transparent 60%);
+  opacity: 0.8;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+.fancy-image-container:hover::after {
+  opacity: 0.4;
+}
+
+/* Text Entrance Animations */
+.animate-text-glow {
+  animation: glow-text 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes glow-text {
+  from {
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.2), 0 0 15px rgba(var(--color-brand-pink-rgb), 0.3);
+  }
+  to {
+    text-shadow: 0 0 14px rgba(255, 255, 255, 0.4), 0 0 28px rgba(var(--color-brand-pink-rgb), 0.6), 0 0 40px rgba(var(--color-brand-purple-rgb), 0.4);
+  }
+}
+
+.text-slide-up {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: slide-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animation-delay-100 {
+  animation-delay: 100ms;
+}
+
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+
+/* High opacity dark background for submenus to block out overlapping text underneath */
+.submenu-dropdown {
+  background: rgba(var(--color-surface-1-rgb), 0.98) !important;
+  border: 1px solid rgba(var(--color-brand-pink-rgb), 0.25) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), 0 0 25px rgba(var(--color-brand-purple-rgb), 0.3) !important;
+}
+
+/* 3D Perspective and Card Flip / Tilt effects */
+.perspective-1000 {
+  perspective: 1000px;
+}
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+/* Hover Tilt Effect */
+.hover-tilt-3d {
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.5s ease, border-color 0.5s ease;
+  transform-style: preserve-3d;
+}
+.hover-tilt-3d:hover {
+  transform: rotateY(8deg) rotateX(4deg) translateZ(12px);
+  box-shadow: 0 25px 50px -12px rgba(var(--color-brand-pink-rgb), 0.35) !important;
+  border-color: rgba(var(--color-brand-pink-rgb), 0.5) !important;
+}
+
+/* Float Animation */
+@keyframes elegant-float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(0.5deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+.animate-elegant-float {
+  animation: elegant-float 6s ease-in-out infinite;
+}
+
+/* Heartbeat glow for 3D decorative shapes (pulse-glow keyframe defined above, near line 47) */
+.animate-pulse-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+/* Forms & Inputs visibility in dark theme */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="url"],
+input[type="tel"],
+input[type="date"],
+select,
+textarea {
+  background-color: rgba(var(--color-surface-1-rgb), 0.8) !important;
+  color: var(--color-white) !important;
+  border-color: var(--color-border-input) !important;
+  transition: all 0.2s ease-in-out;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--color-brand-pink) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(var(--color-brand-pink-rgb), 0.3) !important;
+}
+
+/* Custom Scrollbar for sleek dark look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-zinc-950);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--color-brand-pink-rgb), 0.4);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--color-brand-pink-rgb), 0.7);
+}
+

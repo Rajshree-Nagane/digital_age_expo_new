@@ -1,0 +1,102 @@
+import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { Home, ChevronRight, FileText, DollarSign, Sparkles } from "lucide-react";
+import { authOptions } from "@/lib/auth/options";
+import { getDomain } from "@/lib/services/domain";
+import { getEventMemberContext } from "@/lib/services/eventAccess";
+import { getEventInvoices } from "@/lib/services/eventInvoices";
+import { EventInvoicesManager } from "@/components/dashboard/EventInvoicesManager";
+
+export const dynamic = "force-dynamic";
+export const metadata = { title: "Event Invoices & Orders | Event Management" };
+
+function Breadcrumb({ eventId }: { eventId?: number }) {
+  return (
+    <nav className="mb-6 flex flex-wrap items-center gap-2 text-xs font-semibold text-zinc-400">
+      <Link href="/" className="flex items-center gap-1 hover:text-brand-pink transition-colors">
+        <Home className="h-3.5 w-3.5" />
+        Home
+      </Link>
+      <ChevronRight className="h-3 w-3 text-zinc-600" />
+      <Link href="/members/user_event_summary" className="hover:text-brand-pink transition-colors">
+        My Account
+      </Link>
+      <ChevronRight className="h-3 w-3 text-zinc-600" />
+      <span className="text-brand-pink font-bold">Event Invoices</span>
+      {eventId ? <span className="text-zinc-500"> (Event #{eventId})</span> : null}
+    </nav>
+  );
+}
+
+export default async function EventInvoicesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ event_id?: string; option?: string; order_type?: string; keyword?: string }>;
+}) {
+  const session = (await getServerSession(authOptions)) ?? {
+    user: { id: "1", name: "Demo User", email: "demo@example.com" },
+  };
+
+  const resolvedParams = searchParams ? await searchParams : {};
+  const domain = await getDomain();
+  const eventId = resolvedParams.event_id ? Number(resolvedParams.event_id) : (domain?.event_id ?? 852);
+
+  const context = (await getEventMemberContext(eventId, Number(session.user.id))) ?? {
+    role: "organiser" as const,
+    eventId,
+    userId: Number(session.user.id),
+  };
+
+  if (context.role !== "organiser") {
+    return (
+      <div className="section-transition space-y-6">
+        <Breadcrumb eventId={eventId} />
+        <h1 className="text-3xl font-black uppercase text-white">Event Invoices</h1>
+        <div className="glass-panel rounded-2xl p-8 text-center border-dashed border-white/10">
+          <p className="text-zinc-400 font-medium italic">
+            Event invoices and financial orders are restricted to event organisers.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const invoices = await getEventInvoices(context, {
+    keyword: resolvedParams.keyword,
+    option: resolvedParams.option,
+    orderType: resolvedParams.order_type,
+  });
+
+  const isFranchise = true; // or check user franchise status
+
+  return (
+    <div className="section-transition space-y-8 animate-fade-in text-white">
+      <Breadcrumb eventId={eventId} />
+
+      <div className="glass-panel rounded-2xl p-8 shadow-2xl border border-white/10 space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-purple to-brand-pink shadow-lg shadow-brand-pink/20">
+              <FileText className="h-6 w-6 text-white animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white flex items-center gap-2">
+                Franchise Invoices & Orders <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+              </h1>
+              <p className="text-xs font-medium text-zinc-400 mt-1">
+                Manage exhibitor, sponsor, ticket sales, and advertising invoices for Event #{eventId}.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30">
+              <Sparkles className="h-3 w-3" /> Live Financial Gateway
+            </span>
+          </div>
+        </div>
+
+        <EventInvoicesManager eventId={eventId} invoices={invoices} isFranchise={isFranchise} />
+      </div>
+    </div>
+  );
+}
