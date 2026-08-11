@@ -1,19 +1,25 @@
 /**
  * Seeds find_event_menus with the REAL members-dashboard navigation — the same 7 tabs / 76
- * items that src/components/EventAdminNavbar/index.tsx builds (that component is currently
- * hardcoded and not wired to any database table; this seed makes the CP's Member Menu Manager
- * show the real structure instead of "0 item(s)").
+ * items that src/components/EventAdminNavbar now reads live via
+ * src/lib/services/memberMenu.ts's getLiveMemberMenu() (this table used to be a dead-end the
+ * live nav never read — that's now fixed, so what you edit in CP → Member Menu Manager is what
+ * members actually see).
  *
- * Every item is seeded as organiser-only (visitor/exhibitor/sponsor/speaker = false), matching
- * the screenshot this was built from ("Event Member Area — Organiser role") and the fact that
- * every single item here (Setup Event, Manage Exhibitor, Buy Sponsorship, ...) is an
- * event-organiser action, not something a visitor/exhibitor/sponsor/speaker would use.
+ * Every item is seeded with ALL FIVE role flags true (visitor/organiser/exhibitor/sponsor/
+ * speaker), matching the old hardcoded nav's actual behavior — every role saw the exact same
+ * full menu. That's also this app's established convention for "unrestricted": see
+ * getLiveMemberMenu()'s doc comment. Narrow specific items to specific roles afterwards in the
+ * CP, on purpose, rather than that being an accidental side effect of this seed.
+ *
+ * Also backfills two previously-unused columns so the live nav's tab colors/icons match the
+ * original hardcoded design: `attribute` (tab code, e.g. "LGTS") and `icon_mstr_cd` (tab icon
+ * name) — see GROUP_META below.
  *
  * Safe to re-run: matches existing rows by (title, link, menu_group) and skips them, so manual
  * edits made afterwards in the CP aren't overwritten.
  *
  * Run with:
- *   npx tsx seed-member-menu.ts
+ *   npx tsx scripts/seed-member-menu.ts
  */
 import "dotenv/config";
 import { prisma } from "@/lib/prisma";
@@ -31,6 +37,10 @@ interface SeedItem {
 interface SeedGroup {
   label: string;
   colorClass: string;
+  /** Legacy tab code, backfilled into find_event_menus.attribute. */
+  code: string;
+  /** Tab-level icon name, backfilled into find_event_menus.icon_mstr_cd. */
+  tabIcon: string;
   items: SeedItem[];
 }
 
@@ -38,6 +48,8 @@ const GROUPS: SeedGroup[] = [
   {
     label: "View Event Summary",
     colorClass: "bg-brand-purple hover:bg-black",
+    code: "LGTS",
+    tabIcon: "Menu",
     items: [
       { title: "Event Summary", link: "/members/user_event_summary", icon: "Menu", color: "bg-brand-purple hover:bg-black" },
       { title: "View Public Event", link: "/members/event_show_info", icon: "Eye" },
@@ -49,6 +61,8 @@ const GROUPS: SeedGroup[] = [
   {
     label: "Setup Event",
     colorClass: "bg-brand-pink hover:bg-black",
+    code: "LGTMM",
+    tabIcon: "Settings",
     items: [
       { title: "Event Details", link: "/members/event_details", icon: "Settings" },
       { title: "Setup My Show Profile", link: "/members/event_todo_list", icon: "ZoomOut" },
@@ -76,6 +90,8 @@ const GROUPS: SeedGroup[] = [
   {
     label: "Configure Virtual Event",
     colorClass: "bg-brand-purple hover:bg-black",
+    code: "LGTCL",
+    tabIcon: "Wrench",
     items: [
       { title: "Configure Lobby", link: "/members/event_lobby_layout_manager", icon: "Building" },
       { title: "Configure Lobby Child", link: "/members/event_lobby_layout_child", icon: "Building2" },
@@ -96,6 +112,8 @@ const GROUPS: SeedGroup[] = [
   {
     label: "Manage Events",
     colorClass: "bg-brand-pink hover:bg-black",
+    code: "LGTME",
+    tabIcon: "ListChecks",
     items: [
       { title: "Event Industry", link: "/members/view_industry_list", icon: "Factory" },
       { title: "Manage Leadership Boards", link: "/members/leadership_board", icon: "Bold" },
@@ -127,6 +145,8 @@ const GROUPS: SeedGroup[] = [
   {
     label: "Manage Virtual Booth",
     colorClass: "bg-black hover:bg-brand-purple",
+    code: "LTGMVB",
+    tabIcon: "Video",
     items: [
       { title: "Manage Lobby Visitor Enquires", link: "/members/event_lobby_visitor_enquires", icon: "Quote" },
       { title: "View My Booth", link: "/members/event_lobby_layout_manager?action=view_my_booth", icon: "Target" },
@@ -141,6 +161,8 @@ const GROUPS: SeedGroup[] = [
   {
     label: "Manage Event Orders",
     colorClass: "bg-brand-purple hover:bg-brand-pink",
+    code: "LGTBUY",
+    tabIcon: "ShoppingCart",
     items: [
       { title: "Manage Orders", link: "/members/event_invoices", icon: "FileText" },
       { title: "View Invoices", link: "/members/event_invoices", icon: "StickyNote" },
@@ -155,6 +177,8 @@ const GROUPS: SeedGroup[] = [
   {
     label: "Download Orders",
     colorClass: "bg-brand-pink hover:bg-black",
+    code: "LTGDO",
+    tabIcon: "ArrowDownCircle",
     items: [
       { title: "Download Purchase Order PDF", link: "/members/reports", icon: "ChevronDown" },
       { title: "Download Invoice PDF", link: "/members/reports", icon: "ChevronsDown" },
@@ -184,18 +208,20 @@ async function ensureItem(group: SeedGroup, item: SeedItem, sequence: number): P
       sequence,
       event_category: "default",
       icon: item.icon,
+      icon_mstr_cd: group.tabIcon,
       page_name: derivePageName(item.link),
       link: item.link,
       is_modal: item.is_modal ?? 0,
       modal_name: item.modal_name ?? null,
-      visitor: false,
+      visitor: true,
       organiser: true,
-      exhibitor: false,
-      sponsor: false,
-      speaker: false,
-      partner: 0,
-      marketer: 0,
+      exhibitor: true,
+      sponsor: true,
+      speaker: true,
+      partner: 1,
+      marketer: 1,
       visible: true,
+      attribute: group.code,
       menu_group: group.label,
     },
   });
@@ -203,7 +229,7 @@ async function ensureItem(group: SeedGroup, item: SeedItem, sequence: number): P
 }
 
 async function main() {
-  console.log("Seeding find_event_menus with the real Organiser member-area navigation...");
+  console.log("Seeding find_event_menus with the real members-dashboard navigation...");
   for (const group of GROUPS) {
     let sequence = 1;
     for (const item of group.items) {

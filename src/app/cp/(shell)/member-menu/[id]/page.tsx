@@ -39,68 +39,78 @@ export default async function EditMemberMenuItemPage({
     <div className="max-w-xl space-y-6">
       <h1 className="text-xl font-black uppercase tracking-wider text-white">Edit Member Menu Item</h1>
 
-      <form action={updateAction} className="space-y-5 rounded-2xl border border-white/10 bg-zinc-900/40 p-6">
-        <div className="space-y-2">
-          <label className={LABEL_CLASS}>Title</label>
-          <input name="title" required defaultValue={item.title ?? ""} className={FIELD_CLASS} />
-        </div>
-        <div className="space-y-2">
-          <label className={LABEL_CLASS}>Link (URL or path)</label>
-          <input name="link" required defaultValue={item.link} placeholder="/members/dashboard" className={FIELD_CLASS} />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
+      {/*
+        Two sibling <form>s, not one nested inside the other — the Delete button below is its
+        own <form> (DeleteMemberMenuButton), and HTML forbids a <form> inside a <form> (React
+        warns "cannot be a descendant of <form>" and it breaks hydration). The Save button lives
+        outside the update <form> visually, so it's associated back to it via the standard HTML
+        `form` attribute (form="update-member-menu-item") instead of relying on DOM nesting.
+      */}
+      <div className="space-y-5 rounded-2xl border border-white/10 bg-zinc-900/40 p-6">
+        <form id="update-member-menu-item" action={updateAction} className="space-y-5">
           <div className="space-y-2">
-            <label className={LABEL_CLASS}>Menu Group (optional)</label>
-            <input name="menu_group" defaultValue={item.menu_group ?? ""} className={FIELD_CLASS} />
+            <label className={LABEL_CLASS}>Title</label>
+            <input name="title" required defaultValue={item.title ?? ""} className={FIELD_CLASS} />
           </div>
           <div className="space-y-2">
-            <label className={LABEL_CLASS}>Order</label>
-            <input name="sequence" type="number" defaultValue={item.sequence ?? 0} className={FIELD_CLASS} />
+            <label className={LABEL_CLASS}>Link (URL or path)</label>
+            <input name="link" required defaultValue={item.link} placeholder="/members/dashboard" className={FIELD_CLASS} />
           </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className={LABEL_CLASS}>Icon (optional)</label>
-            <input name="icon" defaultValue={item.icon} className={FIELD_CLASS} />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className={LABEL_CLASS}>Menu Group (optional)</label>
+              <input name="menu_group" defaultValue={item.menu_group ?? ""} className={FIELD_CLASS} />
+            </div>
+            <div className="space-y-2">
+              <label className={LABEL_CLASS}>Order</label>
+              <input name="sequence" type="number" defaultValue={item.sequence ?? 0} className={FIELD_CLASS} />
+            </div>
           </div>
-          <div className="space-y-2">
-            <label className={LABEL_CLASS}>Color</label>
-            <input name="color" defaultValue={item.color ?? "primary"} className={FIELD_CLASS} />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className={LABEL_CLASS}>Icon (optional)</label>
+              <input name="icon" defaultValue={item.icon} className={FIELD_CLASS} />
+            </div>
+            <div className="space-y-2">
+              <label className={LABEL_CLASS}>Color</label>
+              <input name="color" defaultValue={item.color ?? "primary"} className={FIELD_CLASS} />
+            </div>
           </div>
-        </div>
 
-        <div className="space-y-2">
-          <label className={LABEL_CLASS}>Visible to which member roles?</label>
-          <div className="grid grid-cols-3 gap-2 rounded-xl border border-white/10 bg-white/5 p-4">
-            {ROLE_FLAGS.map((r) => (
-              <label key={r.name} className="flex items-center gap-2 text-sm text-zinc-300">
-                <input
-                  type="checkbox"
-                  name={r.name}
-                  defaultChecked={Boolean(item[r.name])}
-                  className="rounded border-white/20 bg-transparent"
-                />
-                {r.label}
-              </label>
-            ))}
+          <div className="space-y-2">
+            <label className={LABEL_CLASS}>Visible to which member roles?</label>
+            <div className="grid grid-cols-3 gap-2 rounded-xl border border-white/10 bg-white/5 p-4">
+              {ROLE_FLAGS.map((r) => (
+                <label key={r.name} className="flex items-center gap-2 text-sm text-zinc-300">
+                  <input
+                    type="checkbox"
+                    name={r.name}
+                    defaultChecked={Boolean(item[r.name])}
+                    className="rounded border-white/20 bg-transparent"
+                  />
+                  {r.label}
+                </label>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <label className="flex items-center gap-2 text-sm text-zinc-300">
-          <input type="checkbox" name="visible" defaultChecked={item.visible} className="rounded border-white/20 bg-transparent" />
-          Visible (master on/off switch)
-        </label>
+          <label className="flex items-center gap-2 text-sm text-zinc-300">
+            <input type="checkbox" name="visible" defaultChecked={item.visible} className="rounded border-white/20 bg-transparent" />
+            Visible (master on/off switch)
+          </label>
+        </form>
 
         <div className="flex items-center justify-between border-t border-white/5 pt-6">
           <DeleteMemberMenuButton action={deleteAction} />
           <button
             type="submit"
+            form="update-member-menu-item"
             className="rounded-full bg-brand-pink px-10 py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-brand-pink/20 transition hover:scale-[1.02] active:scale-95"
           >
             Save Changes
           </button>
         </div>
-      </form>
+      </div>
     </div>
   );
 }

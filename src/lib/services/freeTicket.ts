@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { FreeTicketInput } from "@/lib/validations/freeTicket";
+import { REFERRAL_SOURCE_OPTIONS, type FreeTicketInput } from "@/lib/validations/freeTicket";
 
 // A handful of legacy required-but-defaultless columns on find_events_rsvp unrelated to a
 // simple public ticket claim (table-seating and a specific email-campaign flow). Filled with
@@ -19,6 +19,11 @@ const REQUIRED_LEGACY_DEFAULTS = {
   how_can_i_help: false,
 } as const;
 
+function referralLabel(code: string | undefined): string | null {
+  if (!code) return null;
+  return REFERRAL_SOURCE_OPTIONS.find((opt) => opt.code === code)?.label ?? null;
+}
+
 /** Mirrors event_register.php's `guest_rsvp` ajax action → Events::rsvp_new() → find_events_rsvp. */
 export async function findFreeTicketConflict(eventId: number, email: string) {
   const existing = await prisma.find_events_rsvp.findFirst({
@@ -28,6 +33,8 @@ export async function findFreeTicketConflict(eventId: number, email: string) {
   return existing?.id ?? null;
 }
 
+/** Mirrors template/findusonweb/blocks/visitor_register_form.php's submit handler — same target
+ * table (find_events_rsvp) and mostly the same field set as that legacy block form. */
 export async function createFreeTicketRsvp(eventId: number, input: FreeTicketInput) {
   return prisma.find_events_rsvp.create({
     data: {
@@ -37,8 +44,20 @@ export async function createFreeTicketRsvp(eventId: number, input: FreeTicketInp
       name: `${input.first_name} ${input.last_name}`.trim(),
       email: input.email,
       phone: input.phone,
+      workphone: input.work_phone || null,
       business: input.business || null,
       position: input.position || null,
+      linkedin_user_profile: input.linkedin_profile || null,
+      referral_code: input.referral_code || null,
+      referral_mstr_id: input.referral_mstr_id || null,
+      visitor_referrer_from: input.referrer_from || null,
+      visitor_why_exhibit: input.why_exhibit || null,
+      visitor_is_webinars: input.is_webinars ? 1 : 0,
+      visitor_is_workshops: input.is_workshops ? 1 : 0,
+      visitor_is_e_magazine: input.is_e_magazine ? 1 : 0,
+      visitor_is_newsletter: input.is_newsletter ? 1 : 0,
+      visitor_is_business_presentation: input.is_business_presentation ? 1 : 0,
+      source: referralLabel(input.referral_mstr_id),
       description: input.interest || null,
       status: "Registered",
       ...REQUIRED_LEGACY_DEFAULTS,

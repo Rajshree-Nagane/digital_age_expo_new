@@ -68,6 +68,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { DEFAULT_EVENT_ID } from "@/lib/site-config";
+import type { MemberMenuTabData } from "@/lib/services/memberMenu";
 
 /** ---------- Types ---------- */
 
@@ -75,7 +76,6 @@ interface SubItem {
   title: string;
   href: string;
   icon: LucideIcon;
-  colorClass?: string;
   modal?: string;
 }
 
@@ -83,502 +83,108 @@ interface Tab {
   code: string;
   label: string;
   icon: LucideIcon;
-  colorClass: string;
   items: SubItem[];
 }
 
-/** ---------- Constants ---------- */
+/**
+ * find_event_menus stores icons as plain string names (e.g. "Menu") rather than component
+ * references — component references aren't serializable across the Server → Client Component
+ * boundary, so the server (getLiveMemberMenu) can only ever hand this component strings. This
+ * map resolves those names back to the actual Lucide components, using the exact same icon set
+ * the old hardcoded tab/item list used.
+ */
+const ICON_MAP: Record<string, LucideIcon> = {
+  Menu,
+  Settings,
+  Settings2,
+  Wrench,
+  ListChecks,
+  Video,
+  ShoppingCart,
+  ArrowDownCircle,
+  Eye,
+  Mail,
+  Inbox,
+  ZoomOut,
+  Info,
+  Indent,
+  HelpCircle,
+  Newspaper,
+  Rss,
+  Ticket,
+  Calendar,
+  Copy,
+  Building,
+  Building2,
+  CircleDot,
+  Coffee,
+  ListOrdered,
+  BookOpen,
+  Square,
+  Bell,
+  Users,
+  FileText,
+  Files,
+  Factory,
+  Bold,
+  UserPlus,
+  LineChart,
+  Mic,
+  Map,
+  Tv,
+  Download,
+  AlignCenter,
+  Edit,
+  ArrowDownWideNarrow,
+  Image: ImageIcon,
+  Clapperboard,
+  CheckSquare,
+  Quote,
+  Target,
+  Briefcase,
+  Database,
+  Film,
+  List,
+  StickyNote,
+  Home,
+  Megaphone,
+  Bookmark,
+  Gem,
+  Languages,
+  PenTool,
+  ChevronDown,
+  ChevronsDown,
+};
 
-const BASE = "/members";
+function resolveIcon(name: string): LucideIcon {
+  return ICON_MAP[name] ?? Menu;
+}
 
 /**
- * Builds all event admin navigation tabs.
- *
- * If no eventId is passed to the component,
- * eventId will default to DEFAULT_EVENT_ID (852).
+ * find_event_menus.link is stored generically (no event scoping baked in, so the same row works
+ * for every event) — this appends `event_id` at render time instead, preserving any existing
+ * query string (e.g. "?action=view_my_booth") rather than clobbering it.
  */
-function buildTabs(eventId: number | string): Tab[] {
-  const q = `event_id=${eventId}`;
+function withEventId(href: string, eventId: number | string): string {
+  if (!href || href === "#") return href;
+  const separator = href.includes("?") ? "&" : "?";
+  return `${href}${separator}event_id=${eventId}`;
+}
 
-  return [
-    // ---------------------------------------------------------
-    // ACCOUNT ONBOARDING
-    // ---------------------------------------------------------
-  
-
-    // ---------------------------------------------------------
-    // VIEW EVENT SUMMARY
-    // ---------------------------------------------------------
-    {
-      code: "LGTS",
-      label: "View Event Summary",
-      icon: Menu,
-      colorClass: "bg-brand-purple hover:bg-black",
-      items: [
-        {
-          title: "Event Summary",
-          href: `${BASE}/user_event_summary?${q}`,
-          icon: Menu,
-          colorClass: "bg-brand-purple hover:bg-black",
-        },
-        {
-          title: "View Public Event",
-          href: `${BASE}/event_show_info?${q}`,
-          icon: Eye,
-        },
-        {
-          title: "Marketing Tools",
-          href: `${BASE}/event_marketing_tools?${q}`,
-          icon: Settings2,
-        },
-        {
-          title: "Email Logs",
-          href: `${BASE}/event_mail_logs?${q}`,
-          icon: Mail,
-        },
-        {
-          title: "Letter Logs",
-          href: `${BASE}/event_letter_logs?${q}`,
-          icon: Inbox,
-        },
-      ],
-    },
-
-    // ---------------------------------------------------------
-    // SETUP EVENT
-    // ---------------------------------------------------------
-    {
-      code: "LGTMM",
-      label: "Setup Event",
-      icon: Settings,
-      colorClass: "bg-brand-pink hover:bg-black",
-      items: [
-        {
-          title: "Event Details",
-          href: `${BASE}/event_details?${q}`,
-          icon: Settings,
-        },
-        {
-          title: "Setup My Show Profile",
-          href: `${BASE}/event_todo_list?${q}`,
-          icon: ZoomOut,
-        },
-        {
-          title: "Setup Show Info",
-          href: `${BASE}/event_show_info?${q}`,
-          icon: Info,
-        },
-        {
-          title: "Setup About the Show",
-          href: `${BASE}/event_about_us?${q}`,
-          icon: Indent,
-        },
-        {
-          title: "Setup FAQs",
-          href: `${BASE}/event_faq?${q}`,
-          icon: HelpCircle,
-        },
-        {
-          title: "Setup Event Blog",
-          href: `${BASE}/user_blog?${q}`,
-          icon: Newspaper,
-        },
-        {
-          title: "Setup News Feed",
-          href: `${BASE}/news_feed?${q}`,
-          icon: Rss,
-        },
-        {
-          title: "Setup Event Tickets",
-          href: `${BASE}/event_ticket?${q}`,
-          icon: Ticket,
-        },
-        {
-          title: "Setup Event Schedule",
-          href: `${BASE}/event_schedule_meeting?${q}`,
-          icon: Calendar,
-        },
-        {
-          title: "Setup Sponsorship",
-          href: `${BASE}/event_sponsorship_setup?${q}`,
-          icon: Settings,
-        },
-        {
-          title: "Setup Trade stand",
-          href: `${BASE}/event_tradestand_setup?${q}`,
-          icon: Wrench,
-        },
-        {
-          title: "Manage Magazine Page Setup",
-          href: `${BASE}/event_magazine_setup?${q}`,
-          icon: ListChecks,
-        },
-        {
-          title: "Copy Event",
-          href: "#",
-          icon: Copy,
-          colorClass: "bg-green-600 hover:bg-green-700",
-          modal: "copyEventModal",
-        },
-      ],
-    },
-
-    // ---------------------------------------------------------
-    // CONFIGURE VIRTUAL EVENT
-    // ---------------------------------------------------------
-    {
-      code: "LGTCL",
-      label: "Configure Virtual Event",
-      icon: Wrench,
-      colorClass: "bg-brand-purple hover:bg-black",
-      items: [
-        {
-          title: "Configure Lobby",
-          href: `${BASE}/event_lobby_layout_manager?${q}`,
-          icon: Building,
-        },
-        {
-          title: "Configure Lobby Child",
-          href: `${BASE}/event_lobby_layout_child?${q}`,
-          icon: Building2,
-        },
-        {
-          title: "Configure Lobby Spots",
-          href: `${BASE}/event_lobby_spots?${q}`,
-          icon: CircleDot,
-        },
-        {
-          title: "Configure Lobby Welcome Tour",
-          href: `${BASE}/event_lobby_welcome_tour?${q}`,
-          icon: Coffee,
-        },
-        {
-          title: "Configure Lobby Assets",
-          href: `${BASE}/event_lobby_layout_type_assets?${q}`,
-          icon: ListOrdered,
-        },
-        {
-          title: "Configure Lobby Agenda",
-          href: `${BASE}/event_lobby_agenda_items?${q}`,
-          icon: BookOpen,
-        },
-        {
-          title: "Configure Lobby Polling",
-          href: `${BASE}/event_lobby_polling?${q}`,
-          icon: Square,
-        },
-        {
-          title: "Exhibitor Spots",
-          href: `${BASE}/event_lobby_spots_tabular?${q}`,
-          icon: Building2,
-        },
-        {
-          title: "Manage Registration Form",
-          href: `${BASE}/manage_registration?${q}`,
-          icon: Square,
-        },
-        {
-          title: "Event Menu",
-          href: `${BASE}/manage_event_menu?${q}`,
-          icon: Menu,
-        },
-        {
-          title: "Event Notification",
-          href: `${BASE}/event_notifications?${q}`,
-          icon: Bell,
-        },
-        {
-          title: "Networking Rooms",
-          href: `${BASE}/event_networking_room?${q}`,
-          icon: Users,
-        },
-        {
-          title: "Event Welcome Pack",
-          href: `${BASE}/event_welcome_pack?${q}`,
-          icon: FileText,
-        },
-        {
-          title: "Event Templates",
-          href: `${BASE}/event_lobby_templates?${q}`,
-          icon: Files,
-        },
-      ],
-    },
-
-    // ---------------------------------------------------------
-    // MANAGE EVENTS
-    // ---------------------------------------------------------
-    {
-      code: "LGTME",
-      label: "Manage Events",
-      icon: ListChecks,
-      colorClass: "bg-brand-pink hover:bg-black",
-      items: [
-        {
-          title: "Event Industry",
-          href: `${BASE}/view_industry_list?${q}`,
-          icon: Factory,
-        },
-        {
-          title: "Manage Leadership Boards",
-          href: `${BASE}/leadership_board?${q}`,
-          icon: Bold,
-        },
-        {
-          title: "Manage Agenda",
-          href: `${BASE}/event_lobby_agenda_items?${q}`,
-          icon: BookOpen,
-        },
-        {
-          title: "Manage My Team",
-          href: `${BASE}/event_member?${q}`,
-          icon: UserPlus,
-        },
-        {
-          title: "Manage Visitor",
-          href: `${BASE}/view_visitor?${q}`,
-          icon: Users,
-        },
-        {
-          title: "Manage Exhibitor",
-          href: `${BASE}/view_exhibitor?${q}`,
-          icon: Users,
-        },
-        {
-          title: "Manage Sponsorship",
-          href: `${BASE}/view_sponsor?${q}`,
-          icon: LineChart,
-        },
-        {
-          title: "Manage View Speaker Slots",
-          href: `${BASE}/manage_speaker_slots?${q}`,
-          icon: Mic,
-        },
-        {
-          title: "Manage Speaker",
-          href: `${BASE}/manage_speakers?${q}`,
-          icon: Mic,
-        },
-        {
-          title: "Manage Speaker Questionnaire",
-          href: `${BASE}/manage_speaker_questionaire?${q}`,
-          icon: Mic,
-        },
-        {
-          title: "Manage Banner Stand",
-          href: `${BASE}/manage_banner_stands?${q}`,
-          icon: Map,
-        },
-        {
-          title: "Manage Advertiser",
-          href: `${BASE}/manage_event_advertiser?${q}`,
-          icon: Tv,
-        },
-        {
-          title: "Manage Magazine",
-          href: `${BASE}/event_advertise_book?${q}`,
-          icon: Newspaper,
-        },
-        {
-          title: "Manage Partner",
-          href: `${BASE}/manage_awards_partner?${q}`,
-          icon: Users,
-        },
-        {
-          title: "Manage Marketer",
-          href: `${BASE}/manage_event_marketer?${q}`,
-          icon: Tv,
-        },
-        {
-          title: "Manage Publication Contacts",
-          href: `${BASE}/publication_contacts?${q}`,
-          icon: UserPlus,
-        },
-        {
-          title: "Manage Download",
-          href: `${BASE}/manage_event_download?${q}`,
-          icon: Download,
-        },
-        {
-          title: "Manage Artwork",
-          href: `${BASE}/manage_event_artwork?${q}`,
-          icon: AlignCenter,
-        },
-        {
-          title: "Manage Content Writing",
-          href: `${BASE}/manage_event_content_request?${q}`,
-          icon: Edit,
-        },
-        {
-          title: "Manage Promotions",
-          href: `${BASE}/manage_event_promotions?${q}`,
-          icon: ArrowDownWideNarrow,
-        },
-        {
-          title: "Manage Exhibitor Information",
-          href: `${BASE}/view_exhibitor_information?${q}`,
-          icon: Users,
-        },
-        {
-          title: "Manage Photos",
-          href: `${BASE}/manage_organiser_photos?${q}`,
-          icon: ImageIcon,
-        },
-        {
-          title: "Manage Videos",
-          href: `${BASE}/manage_organiser_videos?${q}`,
-          icon: Clapperboard,
-        },
-        {
-          title: "Manage Checklist",
-          href: `${BASE}/event_checklist?${q}`,
-          icon: CheckSquare,
-        },
-        {
-          title: "Manage Ticket Buyers",
-          href: `${BASE}/event_ticket_buyers?${q}`,
-          icon: Users,
-        },
-      ],
-    },
-
-    // ---------------------------------------------------------
-    // MANAGE VIRTUAL BOOTH
-    // ---------------------------------------------------------
-    {
-      code: "LTGMVB",
-      label: "Manage Virtual Booth",
-      icon: Video,
-      colorClass: "bg-black hover:bg-brand-purple",
-      items: [
-        {
-          title: "Manage Lobby Visitor Enquires",
-          href: `${BASE}/event_lobby_visitor_enquires?${q}`,
-          icon: Quote,
-        },
-        {
-          title: "View My Booth",
-          href: `${BASE}/event_lobby_layout_manager?action=view_my_booth&${q}`,
-          icon: Target,
-        },
-        {
-          title: "Manage My Booth",
-          href: `${BASE}/manage_stand_assets?${q}`,
-          icon: Briefcase,
-        },
-        {
-          title: "Manage My Assets",
-          href: `${BASE}/manage_event_assets?${q}`,
-          icon: Database,
-        },
-        {
-          title: "Enter the show",
-          href: `${BASE}/event_lobby_layout_manager?action=view_lobby&${q}`,
-          icon: Eye,
-        },
-        {
-          title: "Change Auditorium link",
-          href: `${BASE}/event_lobby_layout_manager?action=change_auditiorium_link&${q}`,
-          icon: Film,
-        },
-        {
-          title: "Reports",
-          href: `${BASE}/reports?${q}`,
-          icon: List,
-        },
-        {
-          title: "Visitor Timeline",
-          href: `${BASE}/event_user_activity_report?${q}`,
-          icon: LineChart,
-        },
-      ],
-    },
-
-    // ---------------------------------------------------------
-    // MANAGE EVENT ORDERS
-    // ---------------------------------------------------------
-    {
-      code: "LGTBUY",
-      label: "Manage Event Orders",
-      icon: ShoppingCart,
-      colorClass: "bg-brand-purple hover:bg-brand-pink",
-      items: [
-        {
-          title: "Manage Orders",
-          href: `${BASE}/event_invoices?${q}`,
-          icon: FileText,
-        },
-        {
-          title: "View Invoices",
-          href: `${BASE}/event_invoices?${q}`,
-          icon: StickyNote,
-        },
-        {
-          title: "Buy Sponsorship",
-          href: `${BASE}/event_ticket?${q}`,
-          icon: Home,
-          colorClass: "bg-red-600 hover:bg-red-700",
-        },
-        {
-          title: "Buy Speaker Slot",
-          href: `${BASE}/manage_speakers?${q}`,
-          icon: Megaphone,
-          colorClass: "bg-red-600 hover:bg-red-700",
-        },
-        {
-          title: "Buy Banner Stand",
-          href: `${BASE}/manage_banner_stands?${q}`,
-          icon: Bookmark,
-          colorClass: "bg-red-600 hover:bg-red-700",
-        },
-        {
-          title: "Buy Advert",
-          href: `${BASE}/event_magazine_setup?${q}`,
-          icon: Gem,
-          colorClass: "bg-red-600 hover:bg-red-700",
-        },
-        {
-          title: "Buy Artwork",
-          href: `${BASE}/manage_event_artwork?${q}`,
-          icon: Languages,
-          colorClass: "bg-red-600 hover:bg-red-700",
-        },
-        {
-          title: "Buy Content Writing",
-          href: `${BASE}/manage_event_content_request?${q}`,
-          icon: PenTool,
-          colorClass: "bg-red-600 hover:bg-red-700",
-        },
-      ],
-    },
-
-    // ---------------------------------------------------------
-    // DOWNLOAD ORDERS
-    // ---------------------------------------------------------
-    {
-      code: "LTGDO",
-      label: "Download Orders",
-      icon: ArrowDownCircle,
-      colorClass: "bg-brand-pink hover:bg-black",
-      items: [
-        {
-          title: "Download Purchase Order PDF",
-          href: `${BASE}/reports?${q}`,
-          icon: ChevronDown,
-        },
-        {
-          title: "Download Invoice PDF",
-          href: `${BASE}/reports?${q}`,
-          icon: ChevronsDown,
-        },
-        {
-          title: "Download Credit Note PDF",
-          href: `${BASE}/reports?${q}`,
-          icon: ArrowDownCircle,
-        },
-      ],
-    },
-  ];
+/** Converts the raw rows from getLiveMemberMenu (icon names as strings) into what the rest of
+ * this component renders (resolved icon components, event-scoped hrefs). */
+function resolveTabs(rawTabs: MemberMenuTabData[], eventId: number | string): Tab[] {
+  return rawTabs.map((tab) => ({
+    code: tab.code,
+    label: tab.label,
+    icon: resolveIcon(tab.icon),
+    items: tab.items.map((item) => ({
+      title: item.title,
+      href: item.isModal ? "#" : withEventId(item.href, eventId),
+      icon: resolveIcon(item.icon),
+      modal: item.isModal ? item.modalName ?? undefined : undefined,
+    })),
+  }));
 }
 
 /** Get pathname without query parameters */
@@ -589,6 +195,13 @@ function pathOf(href: string) {
 /** ---------- Component Props ---------- */
 
 interface EventAdminNavbarProps {
+  /**
+   * Resolved server-side by getLiveMemberMenu() (src/lib/services/memberMenu.ts) from
+   * find_event_menus, already scoped to the signed-in member's role — this component no longer
+   * carries its own hardcoded tab/item list.
+   */
+  tabs: MemberMenuTabData[];
+
   /**
    * Event ID is optional.
    * If not provided, DEFAULT_EVENT_ID (852) will be used automatically.
@@ -609,11 +222,12 @@ interface EventAdminNavbarProps {
 /** ---------- Component ---------- */
 
 export default function EventAdminNavbar({
+  tabs: rawTabs,
   eventId = DEFAULT_EVENT_ID,
   defaultTab,
   onOpenModal,
 }: EventAdminNavbarProps) {
-  const tabs = buildTabs(eventId);
+  const tabs = resolveTabs(rawTabs, eventId);
   const pathname = usePathname();
 
   /**
@@ -659,13 +273,13 @@ export default function EventAdminNavbar({
    */
   const matchedTabOnMount = tabForPath(pathname);
   const [activeTab, setActiveTab] = useState(
-    defaultTab ?? matchedTabOnMount ?? tabs[0].code
+    defaultTab ?? matchedTabOnMount ?? tabs[0]?.code ?? ""
   );
 
   /**
    * Keep active tab synchronized with URL changes.
    *
-   * We only trigger this if the pathname actually changes, 
+   * We only trigger this if the pathname actually changes,
    * allowing manual tab switching to persist until a new page is loaded.
    */
   useEffect(() => {
@@ -682,6 +296,24 @@ export default function EventAdminNavbar({
   const current =
     tabs.find((tab) => tab.code === activeTab) ??
     tabs[0];
+
+  // No items configured for this role at all (e.g. a brand-new role with nothing assigned to it
+  // yet in CP → Member Menu Manager) — render a friendly empty state instead of crashing on
+  // `current.code` below.
+  if (!current) {
+    return (
+      <div className="w-full">
+        <div className="rounded-xl border border-white/10 bg-black/40 p-8 text-center text-sm text-zinc-500 backdrop-blur-md">
+          No menu items are configured for your role yet.
+        </div>
+        <CopyEventModal
+          open={internalModalId === "copyEventModal"}
+          eventId={eventId}
+          onClose={() => setInternalModalId(null)}
+        />
+      </div>
+    );
+  }
 
   const getTabColors = (code: string) => {
     switch (code) {

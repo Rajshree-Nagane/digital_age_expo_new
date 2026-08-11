@@ -5,7 +5,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios, { isAxiosError } from "axios";
 import { CheckCircle2, AlertCircle, Ticket } from "lucide-react";
-import { freeTicketSchema, type FreeTicketInput } from "@/lib/validations/freeTicket";
+import {
+  freeTicketSchema,
+  REFERRAL_SOURCE_OPTIONS,
+  OTHER_REFERRAL_CODE,
+  type FreeTicketInput,
+} from "@/lib/validations/freeTicket";
 
 const INPUT_CLASS =
   "w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500";
@@ -20,6 +25,14 @@ const INTEREST_OPTIONS = [
   "Networking & Partnership",
 ];
 
+const DIGITAL_OFFERINGS = [
+  { name: "is_webinars" as const, label: "Webinars & Seminars" },
+  { name: "is_workshops" as const, label: "Workshops" },
+  { name: "is_e_magazine" as const, label: "E-magazine" },
+  { name: "is_newsletter" as const, label: "Newsletter" },
+  { name: "is_business_presentation" as const, label: "Business Presentation" },
+];
+
 export function FreeTicketForm() {
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -28,11 +41,17 @@ export function FreeTicketForm() {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FreeTicketInput>({
     resolver: zodResolver(freeTicketSchema),
-    defaultValues: { interest: INTEREST_OPTIONS[0] },
+    defaultValues: { interest: INTEREST_OPTIONS[0], confirm: false },
   });
+
+  // Mirrors the legacy form's `#referral_mstr_id.change()` jQuery handler — the free-text
+  // "where did you hear about the show?" field only appears when "Other" is selected.
+  const referralSource = watch("referral_mstr_id");
+  const showReferrerFrom = referralSource === OTHER_REFERRAL_CODE;
 
   async function onSubmit(data: FreeTicketInput) {
     try {
@@ -100,14 +119,25 @@ export function FreeTicketForm() {
           {errors.phone && <p className="mt-1 text-xs text-rose-600 font-medium">{errors.phone.message}</p>}
         </div>
         <div>
+          <label className={LABEL_CLASS}>Work Number</label>
+          <input {...register("work_phone")} placeholder="+44 20 7946 0000" className={INPUT_CLASS} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
           <label className={LABEL_CLASS}>Company Name</label>
           <input {...register("business")} placeholder="Acme Inc" className={INPUT_CLASS} />
+        </div>
+        <div>
+          <label className={LABEL_CLASS}>Job Title</label>
+          <input {...register("position")} placeholder="Marketing Director" className={INPUT_CLASS} />
         </div>
       </div>
 
       <div>
-        <label className={LABEL_CLASS}>Job Title</label>
-        <input {...register("position")} placeholder="Marketing Director" className={INPUT_CLASS} />
+        <label className={LABEL_CLASS}>LinkedIn Profile</label>
+        <input {...register("linkedin_profile")} placeholder="https://linkedin.com/in/johndoe" className={INPUT_CLASS} />
       </div>
 
       <div>
@@ -119,6 +149,83 @@ export function FreeTicketForm() {
             </option>
           ))}
         </select>
+      </div>
+
+      <hr className="border-slate-200" />
+
+      <div>
+        <label className={LABEL_CLASS}>Where did you hear about the show?</label>
+        <select {...register("referral_mstr_id")} className={INPUT_CLASS} defaultValue="">
+          <option value="">Select an option</option>
+          {REFERRAL_SOURCE_OPTIONS.map((opt) => (
+            <option key={opt.code} value={opt.code}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {showReferrerFrom && (
+        <div>
+          <input
+            {...register("referrer_from")}
+            placeholder="Tell us where you heard about the show"
+            className={INPUT_CLASS}
+          />
+          {errors.referrer_from && (
+            <p className="mt-1 text-xs text-rose-600 font-medium">{errors.referrer_from.message}</p>
+          )}
+        </div>
+      )}
+
+      <div>
+        <label className={LABEL_CLASS}>Referral Code</label>
+        <input
+          {...register("referral_code")}
+          placeholder="Please use the code handed to you by our partners, if any"
+          className={INPUT_CLASS}
+        />
+      </div>
+
+      <div>
+        <label className={LABEL_CLASS}>Interested in exhibiting or sponsorship opportunities?</label>
+        <input {...register("why_exhibit")} placeholder="Tell us a little about your interest" className={INPUT_CLASS} />
+      </div>
+
+      <hr className="border-slate-200" />
+
+      <div>
+        <p className={LABEL_CLASS}>Please tick any of the following free digital products you are interested in</p>
+        <div className="space-y-2 mt-2">
+          {DIGITAL_OFFERINGS.map((item) => (
+            <label key={item.name} className="flex items-center gap-2.5 text-sm text-slate-700">
+              <input type="checkbox" {...register(item.name)} className="w-4 h-4 rounded border-slate-300 text-pink-600 focus:ring-pink-500" />
+              {item.label}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <hr className="border-slate-200" />
+
+      <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 space-y-3">
+        <p className="text-xs text-slate-600">
+          By clicking Register below you submit this registration form for your interest and consent to the event
+          organisers sending you emails regarding this event.
+        </p>
+        <label className="flex items-start gap-2.5 text-sm font-semibold text-slate-800">
+          <input
+            type="checkbox"
+            {...register("confirm")}
+            className="mt-0.5 w-4 h-4 rounded border-slate-300 text-pink-600 focus:ring-pink-500"
+          />
+          Please tick here to indicate you have read and understood this *
+        </label>
+        {errors.confirm && <p className="text-xs text-rose-600 font-medium">{errors.confirm.message}</p>}
+        <p className="text-xs text-slate-600">
+          By clicking Register below, you consent to allow the show to store, share and process the personal
+          information submitted above to provide you the content requested.
+        </p>
       </div>
 
       {status === "error" && (
