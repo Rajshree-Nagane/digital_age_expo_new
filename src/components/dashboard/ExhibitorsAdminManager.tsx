@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios, { isAxiosError } from "axios";
@@ -92,6 +93,16 @@ function ExhibitorFormModal({
   const [activeTab, setActiveTab] = useState<"general" | "stand" | "digital" | "preferences">("general");
   const isEdit = typeof defaultValues?.id === "number";
 
+  // This modal is triggered from inside ancestors that have a CSS `animation`
+  // (.section-transition on the members layout) and a `backdrop-filter` (.glass-panel) — both
+  // create a new containing block for `position: fixed`, which pins the overlay inside that
+  // ancestor's box instead of the viewport (it renders far down the page, requiring a scroll to
+  // find it, instead of centering on screen). Portaling straight to document.body sidesteps that
+  // entirely — same fix already used by CopyEventModal.tsx for the identical symptom. `document`
+  // isn't available during SSR, so only portal once mounted client-side.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const {
     register,
     handleSubmit,
@@ -166,7 +177,9 @@ function ExhibitorFormModal({
     }
   }
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-300">
       <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-zinc-950 border border-white/10 p-8 shadow-2xl space-y-6">
         <div className="flex items-center justify-between border-b border-white/5 pb-4">
@@ -490,7 +503,8 @@ function ExhibitorFormModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -603,20 +617,6 @@ export function ExhibitorsAdminManager({
     }
   }
 
-  async function applyBulkStatus(status: string) {
-    if (selected.size === 0) return;
-    setBulkPending(true);
-    setErrorMessage(null);
-    try {
-      await axios.post("/api/members/exhibitors-admin/bulk-status", { ids: [...selected], status });
-      await refreshData();
-    } catch {
-      setErrorMessage("Could not update selected exhibitors.");
-    } finally {
-      setBulkPending(false);
-    }
-  }
-
   async function bulkDelete() {
     if (selected.size === 0) return;
     if (!window.confirm(`Delete ${selected.size} selected exhibitor${selected.size === 1 ? "" : "s"}? This cannot be undone.`)) return;
@@ -673,23 +673,32 @@ export function ExhibitorsAdminManager({
       </div>
 
       <div className="glass-panel rounded-3xl p-8 border-white/10 shadow-2xl backdrop-blur-md space-y-6">
-        {/* Bulk Action Controls & Top Button */}
+        {/* Quick Status Filter Chips — click any chip to filter the table below to that status
+            (no row selection needed, same activeFilter mechanism as the stat badges above).
+            Bulk Delete stays a true bulk action: it only activates once you tick row checkboxes. */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap gap-2">
-            {EXHIBITOR_BULK_STATUS_ACTIONS.map((status) => (
-              <button
-                key={status}
-                disabled={selected.size === 0 || bulkPending}
-                onClick={() => applyBulkStatus(status)}
-                className="rounded-full bg-brand-purple/10 border border-brand-purple/20 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-brand-purple hover:bg-brand-purple hover:text-white transition-all disabled:opacity-20 cursor-pointer"
-              >
-                {BULK_ACTION_LABEL[status] ?? status}
-              </button>
-            ))}
+            {EXHIBITOR_BULK_STATUS_ACTIONS.map((status) => {
+              const isActive = activeFilter === status;
+              return (
+                <button
+                  key={status}
+                  onClick={() => handleBadgeClick(status)}
+                  className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                    isActive
+                      ? "bg-violet-500 border-violet-400 text-white shadow-lg shadow-violet-500/30"
+                      : "bg-violet-500/15 border-violet-400/40 text-violet-200 hover:bg-violet-500 hover:text-white hover:border-violet-400"
+                  }`}
+                >
+                  {BULK_ACTION_LABEL[status] ?? status}
+                </button>
+              );
+            })}
             <button
               disabled={selected.size === 0 || bulkPending}
               onClick={bulkDelete}
-              className="rounded-full bg-red-500/10 border border-red-500/20 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-500 hover:text-white transition-all disabled:opacity-20 cursor-pointer"
+              className="rounded-full bg-rose-500/15 border border-rose-400/40 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-rose-300 hover:bg-rose-600 hover:text-white hover:border-rose-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-rose-500/15 disabled:hover:text-rose-300 cursor-pointer"
+              title={selected.size === 0 ? "Tick one or more exhibitors below to enable bulk delete" : undefined}
             >
               Bulk Delete
             </button>

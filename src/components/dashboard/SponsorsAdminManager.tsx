@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,6 +39,8 @@ function SponsorFormModal({
 }) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const isEdit = typeof defaultValues?.id === "number";
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const {
     register,
@@ -79,7 +82,9 @@ function SponsorFormModal({
     }
   }
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-300">
       <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-zinc-900 border border-white/10 p-8 shadow-2xl space-y-8">
         <div className="flex items-center justify-between border-b border-white/5 pb-6">
@@ -188,7 +193,8 @@ function SponsorFormModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

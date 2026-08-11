@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -125,6 +126,9 @@ function ChildLobbyFormModal({
   const imageFileInputRef = useRef<HTMLInputElement>(null);
   const helpFileInputRef = useRef<HTMLInputElement>(null);
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const isEdit = typeof defaultValues?.id === "number";
 
   const {
@@ -181,7 +185,9 @@ function ChildLobbyFormModal({
     }
   }
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-fade-in overflow-y-auto">
       <div className="relative my-8 w-full max-w-3xl rounded-3xl border border-white/15 bg-zinc-900 p-6 sm:p-8 shadow-2xl text-white">
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
@@ -404,7 +410,8 @@ function ChildLobbyFormModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Plus, Pencil, Trash2, Search, Percent, ShieldCheck, ShieldAlert, BadgeInfo, Coins, ArrowRightLeft, DollarSign } from "lucide-react";
@@ -60,6 +61,9 @@ export function BannerStandsManager({
 
   // Listing options based on selected user
   const [userListings, setUserListings] = useState<{ id: number; title: string }[]>([]);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Fetch listing options when exhibitor is changed
   useEffect(() => {
@@ -549,7 +553,7 @@ export function BannerStandsManager({
       </div>
 
       {/* ALLOCATE / EDIT MODAL */}
-      {modalMode !== null && (
+      {modalMode !== null && mounted && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-zinc-900 p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-black uppercase text-brand-purple tracking-tight mb-6">
@@ -754,11 +758,12 @@ export function BannerStandsManager({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ADJUST / OVERRIDE AMOUNT MODAL */}
-      {amountModalOpen && activeRecord && (
+      {amountModalOpen && activeRecord && mounted && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-zinc-900 p-8 shadow-2xl">
             <h2 className="text-xl font-black uppercase text-brand-purple tracking-tight mb-2">
@@ -843,7 +848,8 @@ export function BannerStandsManager({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
