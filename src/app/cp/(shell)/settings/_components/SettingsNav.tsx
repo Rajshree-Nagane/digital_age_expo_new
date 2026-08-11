@@ -19,17 +19,19 @@ const TABS = [
 /**
  * Tab bar tying together every Settings sub-page — none of the original 5 pages (general/
  * company/branding/social/theme) had any shared navigation between them; each was only
- * reachable if you already knew its URL. Scrolls horizontally on small screens instead of
- * wrapping, so it stays usable on mobile without needing a separate collapsed-menu variant.
+ * reachable if you already knew its URL.
+ *
+ * Wraps onto additional rows rather than scrolling horizontally — an earlier version used
+ * overflow-x-auto with the scrollbar hidden for a cleaner look, but with 10 tabs that meant
+ * Website and Footer were scrolled off-screen with no visual cue that more tabs existed at
+ * all (they just looked missing). Wrapping guarantees every tab is always visible and needs
+ * no scroll affordance, on any viewport width.
  */
 export function SettingsNav() {
   const pathname = usePathname();
 
   return (
-    <nav
-      aria-label="Settings sections"
-      className="flex gap-2 overflow-x-auto border-b border-white/10 pb-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-    >
+    <nav aria-label="Settings sections" className="flex flex-wrap gap-2 border-b border-white/10 pb-4">
       {TABS.map((tab) => {
         const active = pathname === tab.href;
         return (

@@ -96,8 +96,14 @@ export default async function UsersListPage({
         </button>
       </form>
 
-      <div className="overflow-x-auto rounded-2xl border border-white/10">
-        <table className="w-full min-w-[1500px] text-left text-sm">
+      {/* Table is wider than the viewport on most screens (min-w-[1300px] below) — this scrolls
+          horizontally, with a slim, always-visible themed scrollbar (rather than the browser's
+          default, which is easy to miss on a dark background) so it's obvious more columns
+          exist off-screen instead of the table just looking cut off. */}
+      <div
+        className="overflow-x-auto rounded-2xl border border-white/10 [scrollbar-color:rgba(255,255,255,0.25)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb:hover]:bg-white/35"
+      >
+        <table className="w-full min-w-[1300px] text-left text-sm">
           <thead className="bg-white/5 text-[10px] font-black uppercase tracking-widest text-zinc-500">
             <tr>
               <th className="px-4 py-3">User ID</th>
@@ -105,8 +111,6 @@ export default async function UsersListPage({
               <th className="px-4 py-3">First Name</th>
               <th className="px-4 py-3">Last Name</th>
               <th className="px-4 py-3">Franchise</th>
-              <th className="px-4 py-3">Organization</th>
-              <th className="px-4 py-3">Country</th>
               <th className="px-4 py-3">Location</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Role(s)</th>
@@ -131,8 +135,6 @@ export default async function UsersListPage({
                 <td className="px-4 py-3">{user.user_first_name || "—"}</td>
                 <td className="px-4 py-3">{user.user_last_name || "—"}</td>
                 <td className="px-4 py-3 text-zinc-500">{user.franchiseName ?? "—"}</td>
-                <td className="px-4 py-3 text-zinc-500">{user.user_organization || "—"}</td>
-                <td className="px-4 py-3 text-zinc-500">{user.user_country || "—"}</td>
                 <td className="px-4 py-3 text-zinc-500">{user.location ?? "—"}</td>
                 <td className="px-4 py-3 text-zinc-500">{user.user_email}</td>
                 <td className="px-4 py-3">
@@ -181,7 +183,7 @@ export default async function UsersListPage({
             ))}
             {users.length === 0 && (
               <tr>
-                <td colSpan={13} className="px-4 py-8 text-center text-zinc-600">
+                <td colSpan={11} className="px-4 py-8 text-center text-zinc-600">
                   No users match this search.
                 </td>
               </tr>

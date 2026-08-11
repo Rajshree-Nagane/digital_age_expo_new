@@ -38,7 +38,13 @@ export async function loginAction(_prev: CpLoginState, formData: FormData): Prom
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    path: "/cp",
+    // Was "/cp" — that scoped the cookie to only be SENT on requests whose path starts with
+    // "/cp", which silently excluded every /api/cp/** Route Handler (e.g.
+    // /api/cp/settings/upload): the browser never attached the cookie there at all, so
+    // getCpSession() saw no session and those routes reported a misleading "no permission"
+    // error even for a Super Admin. The cookie is httpOnly + sameSite=lax already, so scoping
+    // by path added no real security benefit — "/" fixes every CP API route in one place.
+    path: "/",
     maxAge: CP_SESSION_MAX_AGE_SECONDS,
   });
 
@@ -47,6 +53,10 @@ export async function loginAction(_prev: CpLoginState, formData: FormData): Prom
 
 export async function logoutAction(): Promise<void> {
   const store = await cookies();
-  store.delete(CP_SESSION_COOKIE_NAME);
+  // Clears both the new path ("/") and the old pre-fix path ("/cp") a browser may still be
+  // holding from before this change shipped — cookies are keyed by (name, path), so clearing
+  // only one of the two would leave the other lingering until it naturally expires.
+  store.set(CP_SESSION_COOKIE_NAME, "", { path: "/", maxAge: 0 });
+  store.set(CP_SESSION_COOKIE_NAME, "", { path: "/cp", maxAge: 0 });
   redirect("/cp/login");
 }

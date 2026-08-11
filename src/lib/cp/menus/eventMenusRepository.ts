@@ -34,6 +34,8 @@ export interface EventMenuInput {
   menu_type: string;
   event_category: string;
   icon: string;
+  /** find_event_menus.page_name has no DB default and is NOT NULL — must always be supplied. */
+  page_name: string;
   color: string;
   sequence: number;
   visible: boolean;
@@ -54,6 +56,7 @@ function toDb(input: EventMenuInput) {
     menu_type: input.menu_type,
     event_category: input.event_category,
     icon: input.icon,
+    page_name: input.page_name,
     color: input.color || "primary",
     sequence: input.sequence,
     visible: input.visible,

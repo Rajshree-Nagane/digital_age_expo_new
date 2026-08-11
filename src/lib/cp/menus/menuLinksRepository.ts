@@ -1,8 +1,23 @@
 import { prisma } from "@/lib/prisma";
+import { appliesToDomain } from "@/lib/services/menu";
+import { DOMAIN_ID } from "@/lib/site-config";
 
 const PAGE_SIZE = 20;
 
-/** Backs the general site Menu Manager module (find_menu_links) — top-level nav, footer links, etc. */
+/**
+ * Backs the general site Menu Manager module (find_menu_links) — top-level nav, footer links,
+ * etc. find_menu_links is shared across every domain the legacy install ever hosted (this table
+ * had 727 rows from other sites mixed in), so every read here is scoped through the exact same
+ * appliesToDomain() check the live public navbar's getMenu() uses (src/lib/services/menu.ts) —
+ * otherwise this page would show (and let an admin edit) other sites' menu links, none of which
+ * affect this site at all.
+ *
+ * domain_id is a free-form comma-separated VarChar column, not something Prisma/Postgres can
+ * filter on directly for "is 150 one of these comma-separated values" — so this fetches the
+ * (title/link search-narrowed) candidate rows and applies appliesToDomain() in JS, then paginates
+ * the already-filtered array. At this table's real size (a few hundred rows even before
+ * scoping down to one domain) that's negligible compared to a round trip to Neon.
+ */
 export async function listMenuLinks(params: { page?: number; search?: string } = {}) {
   const page = Math.max(1, params.page ?? 1);
   const search = params.search?.trim();
@@ -11,15 +26,24 @@ export async function listMenuLinks(params: { page?: number; search?: string } =
     ? { OR: [{ title: { contains: search } }, { link: { contains: search } }] }
     : {};
 
-  const [links, total] = await Promise.all([
-    prisma.find_menu_links.findMany({
-      where,
-      orderBy: [{ parent_id: "asc" }, { ordering: "asc" }],
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-    }),
-    prisma.find_menu_links.count({ where }),
-  ]);
+  const allMatching = await prisma.find_menu_links.findMany({
+    where,
+    orderBy: [{ parent_id: "asc" }, { ordering: "asc" }],
+    select: {
+      id: true,
+      title: true,
+      link: true,
+      target: true,
+      parent_id: true,
+      ordering: true,
+      active: true,
+      domain_id: true,
+    },
+  });
+  const scoped = allMatching.filter((row) => appliesToDomain(row.domain_id));
+
+  const total = scoped.length;
+  const links = scoped.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return { links, total, page, pageSize: PAGE_SIZE };
 }
@@ -29,11 +53,12 @@ export async function getMenuLinkForEdit(id: number) {
 }
 
 export async function listTopLevelLinks() {
-  return prisma.find_menu_links.findMany({
+  const rows = await prisma.find_menu_links.findMany({
     where: { parent_id: null },
     orderBy: { ordering: "asc" },
-    select: { id: true, title: true },
+    select: { id: true, title: true, domain_id: true },
   });
+  return rows.filter((row) => appliesToDomain(row.domain_id));
 }
 
 export interface MenuLinkInput {
@@ -72,6 +97,10 @@ export async function createMenuLink(input: MenuLinkInput): Promise<number> {
       sitemap: 1,
       sitemap_xml: 1,
       base_url: false,
+      // New links created from this CP belong to this site specifically — never left blank
+      // (which the legacy "applies everywhere" convention would treat as global/shared across
+      // every domain in the install).
+      domain_id: String(DOMAIN_ID),
     },
     select: { id: true },
   });

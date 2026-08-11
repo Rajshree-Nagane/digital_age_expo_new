@@ -145,13 +145,19 @@ export const DEFAULT_MENU: MenuItem[] = [
   {
     id: 12,
     title: "Contact Us",
-    link: "/contact.php",
+    link: "/contact",
     target: "_self",
     children: [],
   },
 ];
 
-function appliesToDomain(domainId: string | null): boolean {
+/** Legacy multi-domain gate, inherited from class_menu_links.php: a row with a blank/null
+ * domain_id applies everywhere; otherwise it applies only if its comma-separated domain_id
+ * list includes this site's DOMAIN_ID. Exported so menuLinksRepository.ts (the CP's Menu
+ * Manager) can scope its own listing the same way — without this, the Menu Manager shows
+ * every domain's rows mixed together (727 of them, from the shared legacy install), not just
+ * this site's. */
+export function appliesToDomain(domainId: string | null): boolean {
   if (!domainId || domainId.trim() === "") return true;
   return domainId
     .split(",")

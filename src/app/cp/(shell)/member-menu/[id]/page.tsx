@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { requireCpPermission, CP_PERMISSIONS } from "@/lib/cp/rbac";
 import { getEventMenuForEdit } from "@/lib/cp/menus/eventMenusRepository";
 import { updateEventMenuAction, deleteEventMenuAction } from "../actions";
+import { DeleteMemberMenuButton } from "./DeleteButton";
 
 const FIELD_CLASS =
   "w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-brand-pink focus:outline-none transition-colors";
@@ -17,29 +18,35 @@ const ROLE_FLAGS = [
   { name: "marketer", label: "Marketer" },
 ] as const;
 
-export default async function EditMemberMenuItemPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await requireCpPermission(CP_PERMISSIONS.MEMBER_MENU_EDIT);
-  const { id } = await params;
-  const itemId = Number(id);
+export default async function EditMemberMenuItemPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  await requireCpPermission(CP_PERMISSIONS.MEMBER_MENU_EDIT);
 
-  const item = await getEventMenuForEdit(itemId);
+  const { id: idParam } = await params;
+  const id = Number(idParam);
+  if (!Number.isFinite(id)) notFound();
+
+  const item = await getEventMenuForEdit(id);
   if (!item) notFound();
 
-  const updateWithId = updateEventMenuAction.bind(null, itemId);
-  const deleteWithId = deleteEventMenuAction.bind(null, itemId);
+  const updateAction = updateEventMenuAction.bind(null, id);
+  const deleteAction = deleteEventMenuAction.bind(null, id);
 
   return (
     <div className="max-w-xl space-y-6">
       <h1 className="text-xl font-black uppercase tracking-wider text-white">Edit Member Menu Item</h1>
 
-      <form action={updateWithId} className="space-y-5 rounded-2xl border border-white/10 bg-zinc-900/40 p-6">
+      <form action={updateAction} className="space-y-5 rounded-2xl border border-white/10 bg-zinc-900/40 p-6">
         <div className="space-y-2">
           <label className={LABEL_CLASS}>Title</label>
-          <input name="title" defaultValue={item.title ?? ""} required className={FIELD_CLASS} />
+          <input name="title" required defaultValue={item.title ?? ""} className={FIELD_CLASS} />
         </div>
         <div className="space-y-2">
           <label className={LABEL_CLASS}>Link (URL or path)</label>
-          <input name="link" defaultValue={item.link} required className={FIELD_CLASS} />
+          <input name="link" required defaultValue={item.link} placeholder="/members/dashboard" className={FIELD_CLASS} />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
@@ -70,7 +77,7 @@ export default async function EditMemberMenuItemPage({ params }: { params: Promi
                 <input
                   type="checkbox"
                   name={r.name}
-                  defaultChecked={!!item[r.name]}
+                  defaultChecked={Boolean(item[r.name])}
                   className="rounded border-white/20 bg-transparent"
                 />
                 {r.label}
@@ -84,20 +91,15 @@ export default async function EditMemberMenuItemPage({ params }: { params: Promi
           Visible (master on/off switch)
         </label>
 
-        <div className="flex justify-end border-t border-white/5 pt-6">
+        <div className="flex items-center justify-between border-t border-white/5 pt-6">
+          <DeleteMemberMenuButton action={deleteAction} />
           <button
             type="submit"
             className="rounded-full bg-brand-pink px-10 py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-brand-pink/20 transition hover:scale-[1.02] active:scale-95"
           >
-            Save
+            Save Changes
           </button>
         </div>
-      </form>
-
-      <form action={deleteWithId} className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6">
-        <button type="submit" className="text-xs font-bold text-red-500 hover:text-red-400">
-          Delete this item
-        </button>
       </form>
     </div>
   );
