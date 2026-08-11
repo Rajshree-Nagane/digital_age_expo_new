@@ -1,49 +1,95 @@
-import { requireCpPermission, CP_PERMISSIONS } from "@/lib/cp/rbac";
 import { getDomainSettings } from "@/lib/cp/settings/domainRepository";
-import { SOCIAL_MEDIA_FIELDS } from "./fields";
+import { getSettingsGroup, defineSetting } from "@/lib/cp/settings/settingsRepository";
+import { SOCIAL_PLATFORMS, urlFieldName, enabledFieldName, orderFieldName } from "./fields";
 import { saveSocialMediaAction } from "./actions";
+import { SettingsForm } from "../_components/SettingsForm";
+import { FIELD_CLASS, LABEL_CLASS, HINT_CLASS, CHECKBOX_CLASS } from "../_components/styles";
 
-const FIELD_CLASS =
-  "w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-brand-pink focus:outline-none transition-colors";
-const LABEL_CLASS = "text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500";
-
-/** Social Media links — reads/writes find_domains directly, same one row Company Details edits. */
+/** Social Media — five platforms read/write find_domains directly (the same row Company Details
+ * edits); three (TikTok/WhatsApp/Pinterest) plus every platform's enabled/order flag live in
+ * find_settings (grouptitle="social"). See fields.ts for the exact split. */
 export default async function SocialMediaPage() {
-  await requireCpPermission(CP_PERMISSIONS.SETTINGS_VIEW);
-  const domain = await getDomainSettings();
-  const values: Record<string, string> = {
-    facebook: domain.facebook ?? "",
-    instagram: domain.instagram ?? "",
-    youtube: domain.youtube ?? "",
-    google: domain.google ?? "",
-    twitter: domain.twitter ?? "",
-    linkedin: domain.linkedin ?? "",
+  for (const platform of SOCIAL_PLATFORMS) {
+    if (platform.urlSource === "setting") {
+      await defineSetting({ varname: urlFieldName(platform.key), grouptitle: "social", value: "", optioncodeType: "text" });
+    }
+    await defineSetting({ varname: enabledFieldName(platform.key), grouptitle: "social", value: "on", optioncodeType: "text" });
+    await defineSetting({
+      varname: orderFieldName(platform.key),
+      grouptitle: "social",
+      value: String(SOCIAL_PLATFORMS.indexOf(platform)),
+      optioncodeType: "text",
+    });
+  }
+
+  const [domain, settingRows] = await Promise.all([getDomainSettings(), getSettingsGroup("social")]);
+  const settingByVarname = new Map(settingRows.map((r) => [r.varname, r.value ?? ""]));
+  const domainUrlByKey: Record<string, string | null> = {
+    facebook: domain.facebook,
+    instagram: domain.instagram,
+    linkedin: domain.linkedin,
+    twitter: domain.twitter,
+    youtube: domain.youtube,
   };
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-black uppercase tracking-wider text-white">Social Media</h1>
-        <p className="mt-1 text-sm text-zinc-500">Stored directly on find_domains — the same row Company Details edits.</p>
+        <h2 className="text-xl font-black uppercase tracking-wider text-white">Social Media</h2>
+        <p className="mt-1 text-sm text-zinc-500">
+          Only enabled platforms are shown on the public site. Order controls the display sequence (lower first).
+        </p>
       </div>
 
-      <form action={saveSocialMediaAction} className="space-y-5 rounded-2xl border border-white/10 bg-zinc-900/40 p-6">
-        {SOCIAL_MEDIA_FIELDS.map((field) => (
-          <div key={field.key} className="space-y-2">
-            <label className={LABEL_CLASS}>{field.label}</label>
-            <input name={field.key} defaultValue={values[field.key]} className={FIELD_CLASS} />
-          </div>
-        ))}
+      <SettingsForm action={saveSocialMediaAction}>
+        <div className="space-y-4">
+          {SOCIAL_PLATFORMS.map((platform) => {
+            const urlName = urlFieldName(platform.key);
+            const urlValue = platform.urlSource === "domain" ? domainUrlByKey[platform.key] ?? "" : settingByVarname.get(urlName) ?? "";
+            const enabledValue = (settingByVarname.get(enabledFieldName(platform.key)) ?? "on") === "on";
+            const orderValue = settingByVarname.get(orderFieldName(platform.key)) ?? "0";
 
-        <div className="flex justify-end border-t border-white/5 pt-6">
-          <button
-            type="submit"
-            className="rounded-full bg-brand-pink px-10 py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-brand-pink/20 transition hover:scale-[1.02] active:scale-95"
-          >
-            Save
-          </button>
+            return (
+              <div key={platform.key} className="grid gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-4 sm:grid-cols-[1fr_auto_auto] sm:items-end">
+                <div className="space-y-2">
+                  <label className={LABEL_CLASS} htmlFor={urlName}>
+                    {platform.label} URL
+                  </label>
+                  <input id={urlName} name={urlName} type="url" defaultValue={urlValue} className={FIELD_CLASS} />
+                </div>
+                <div className="space-y-2">
+                  <label className={LABEL_CLASS} htmlFor={orderFieldName(platform.key)}>
+                    Order
+                  </label>
+                  <input
+                    id={orderFieldName(platform.key)}
+                    name={orderFieldName(platform.key)}
+                    defaultValue={orderValue}
+                    className={`${FIELD_CLASS} w-20`}
+                  />
+                </div>
+                <label className="flex items-center gap-2 pb-3 sm:pb-0">
+                  <input
+                    type="checkbox"
+                    name={enabledFieldName(platform.key)}
+                    defaultChecked={enabledValue}
+                    className={CHECKBOX_CLASS}
+                  />
+                  <span className={LABEL_CLASS}>Enabled</span>
+                </label>
+              </div>
+            );
+          })}
         </div>
-      </form>
+
+        <div className="space-y-2 border-t border-white/5 pt-6">
+          <label className={LABEL_CLASS} htmlFor="google">
+            Google (Profile / Business Link)
+          </label>
+          <input id="google" name="google" defaultValue={domain.google ?? ""} className={FIELD_CLASS} />
+          <p className={HINT_CLASS}>Legacy field — a Google+/Business profile link, not part of the toggleable platform list above.</p>
+        </div>
+      </SettingsForm>
     </div>
   );
 }

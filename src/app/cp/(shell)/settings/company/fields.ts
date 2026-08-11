@@ -3,6 +3,10 @@
  * domainRepository.ts). This is the CP equivalent of the legacy admin's Domain Details form's
  * "Domain Details" fieldset (name/brand/link/short_description/email/phone/address/etc.),
  * trimmed to the fields that make sense for an admin to edit day-to-day.
+ *
+ * This tab is also where Site Information's "Site Name / Organisation Name / Short
+ * Description" live — see settings/general/fields.ts's comment for why those weren't
+ * duplicated onto the General tab as well.
  */
 export const COMPANY_DETAILS_FIELDS = [
   { key: "name", label: "Company / Site Name", type: "text" },

@@ -1,20 +1,48 @@
 "use server";
 
+import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { requireCpPermission, CP_PERMISSIONS } from "@/lib/cp/rbac";
 import { setSettings } from "@/lib/cp/settings/settingsRepository";
 import { setActiveEventId } from "@/lib/cp/events/eventsRepository";
 import { GENERAL_SETTINGS_FIELDS } from "./fields";
+import { optionalText, optionalUrl, firstZodIssue } from "../_lib/validation";
+import type { SettingsActionState } from "../_components/SettingsForm";
 
-export async function saveGeneralSettingsAction(formData: FormData): Promise<{ ok: boolean }> {
+const generalSettingsSchema = z.object({
+  cp_site_name: optionalText(255),
+  cp_site_title: optionalText(255),
+  cp_site_tagline: optionalText(255),
+  cp_full_description: optionalText(5000),
+  cp_organisation_type: optionalText(255),
+  cp_registration_number: optionalText(100),
+  cp_founded_year: z.union([
+    z.literal(""),
+    z.string().trim().regex(/^\d{4}$/, "Enter a 4-digit year, e.g. 1998."),
+  ]),
+  cp_site_url: optionalUrl,
+  cp_default_timezone: optionalText(100),
+  cp_default_currency: optionalText(10),
+  cp_default_language: optionalText(10),
+});
+
+export async function saveGeneralSettingsAction(
+  _prevState: SettingsActionState,
+  formData: FormData
+): Promise<SettingsActionState> {
   await requireCpPermission(CP_PERMISSIONS.SETTINGS_EDIT);
 
-  const values: Record<string, string> = {};
+  const raw: Record<string, string> = {};
   for (const field of GENERAL_SETTINGS_FIELDS) {
-    values[field.varname] = String(formData.get(field.varname) ?? "");
+    raw[field.varname] = String(formData.get(field.varname) ?? "");
   }
 
-  await setSettings(values);
+  const parsed = generalSettingsSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { success: false, message: firstZodIssue(parsed.error) };
+  }
+
+  await setSettings(parsed.data as Record<string, string>);
 
   // "Select an Event" (blank) leaves the current active event untouched rather than clearing
   // it — there's no valid "no active event" state once one has been chosen (getDomain() always
@@ -34,5 +62,5 @@ export async function saveGeneralSettingsAction(formData: FormData): Promise<{ o
   }
 
   revalidatePath("/cp/settings/general");
-  return { ok: true };
+  return { success: true, message: "Settings updated successfully." };
 }

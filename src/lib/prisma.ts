@@ -13,11 +13,11 @@ try {
   }
 }
 
-let PrismaMariaDb: any;
+let PrismaPg: any;
 try {
-  PrismaMariaDb = require("@prisma/adapter-mariadb").PrismaMariaDb;
+  PrismaPg = require("@prisma/adapter-pg").PrismaPg;
 } catch {
-  PrismaMariaDb = null;
+  PrismaPg = null;
 }
 
 const globalForPrisma = globalThis as unknown as {
@@ -111,25 +111,62 @@ const createMockPrisma = () => {
 };
 
 /**
- * The mariadb driver defaults connectionLimit to 10 when none is set — fine for a single
- * short-lived request, but this app fans a lot of independent findMany/findFirst calls out via
- * Promise.all per page (home page alone kicks off ~9 top-level queries, one of which itself
- * fires 6 more), and Next dev (Turbopack HMR + React double-invoke) piles concurrent renders on
- * top of that. That saturates a 10-connection pool quickly and later requests time out waiting
- * for a free connection ("pool timeout ... active=8 idle=0 limit=10"). Bump the pool via query
- * params, which the mariadb driver parses out of the connection string (see
- * mariadb/lib/config/pool-options.js). Tunable via env so prod can size it to its own DB limits.
+ * node-postgres (the driver behind @prisma/adapter-pg) defaults its pool to 10 connections when
+ * none is set — fine for a single short-lived request, but this app fans a lot of independent
+ * findMany/findFirst calls out via Promise.all per page (home page alone kicks off ~9 top-level
+ * queries, one of which itself fires 6 more), and Next dev (Turbopack HMR + React double-invoke)
+ * piles concurrent renders on top of that. That saturates a 10-connection pool quickly and later
+ * requests time out waiting for a free connection. Bump the pool via node-postgres's own Pool
+ * options (not query-string params — those are a mariadb-driver-specific convention and are
+ * ignored by node-postgres). Tunable via env so prod can size it to its own DB limits.
+ *
+ * Note: DATABASE_URL is expected to be Neon's pooled (pgbouncer) endpoint (the "-pooler"
+ * hostname). Neon's pooler already multiplexes connections server-side, so this app-side pool can
+ * usually be kept modest — lower it via DATABASE_POOL_SIZE if you see "too many connections"
+ * errors from Neon instead of local pool-timeout errors.
  */
-function withPoolTuning(url: string): string {
-  const connectionLimit = Number(process.env.DATABASE_POOL_SIZE) || 25;
-  // Keep this well under Prisma/Next's own request handling budget. If the underlying MariaDB
-  // server can't hand out a connection (e.g. it's hit its own max_connections, or a stray/zombie
-  // dev server process is squatting on connections), we want a clear error in a few seconds, not
-  // a multi-minute hang — that's a server-side problem to go fix, not something to wait out.
-  const acquireTimeout = Number(process.env.DATABASE_POOL_ACQUIRE_TIMEOUT_MS) || 8000;
-  const connectTimeout = Number(process.env.DATABASE_CONNECT_TIMEOUT_MS) || 5000;
-  const separator = url.includes("?") ? "&" : "?";
-  return `${url}${separator}connectionLimit=${connectionLimit}&acquireTimeout=${acquireTimeout}&connectTimeout=${connectTimeout}`;
+/**
+ * pg-connection-string treats sslmode=require/prefer/verify-ca as aliases for verify-full today,
+ * but warns on every connection that it will drop that aliasing (and the security guarantee that
+ * comes with it) in the next major version — see
+ * https://github.com/brianc/node-postgres/issues (pg-connection-string v3 / pg v9 changelog).
+ * Neon's connection strings ship with sslmode=require, which is exactly what triggers this. Since
+ * Neon terminates TLS with a CA-verifiable cert, verify-full is the actual behavior we want anyway
+ * — writing it explicitly here gets the same security guarantee without the per-connection
+ * warning spam, and without having to edit .env (which may have several sslmode=require URLs
+ * copy-pasted from Neon's dashboard across DATABASE_URL/POSTGRES_URL/etc.).
+ */
+function normalizeSslMode(connectionString: string): string {
+  try {
+    const url = new URL(connectionString);
+    const mode = url.searchParams.get("sslmode");
+    if (mode && ["require", "prefer", "verify-ca"].includes(mode)) {
+      url.searchParams.set("sslmode", "verify-full");
+    }
+    return url.toString();
+  } catch {
+    // Not a parseable URL (shouldn't happen for a real DATABASE_URL) — fall back to the original.
+    return connectionString;
+  }
+}
+
+function poolConfig(connectionString: string) {
+  const max = Number(process.env.DATABASE_POOL_SIZE) || 25;
+  // Keep this well under Prisma/Next's own request handling budget, but long enough to survive
+  // Neon's serverless compute waking up from auto-suspend after a period of inactivity — that
+  // cold start alone can take several seconds and isn't a real problem worth failing fast on,
+  // unlike a genuinely stuck/overloaded server. If the underlying Postgres server can't hand out
+  // a connection at all (e.g. it's hit its own max_connections, or a stray/zombie dev server
+  // process is squatting on connections), we still want a clear error rather than a multi-minute
+  // hang — that's a server-side problem to go fix, not something to wait out.
+  const connectionTimeoutMillis = Number(process.env.DATABASE_POOL_ACQUIRE_TIMEOUT_MS) || 15000;
+  const idleTimeoutMillis = Number(process.env.DATABASE_POOL_IDLE_TIMEOUT_MS) || 30000;
+  return {
+    connectionString: normalizeSslMode(connectionString),
+    max,
+    connectionTimeoutMillis,
+    idleTimeoutMillis,
+  };
 }
 
 let prismaInstance: any;
@@ -146,13 +183,13 @@ if (
     prismaInstance = globalForPrisma.prisma;
   } else {
     try {
-      if (!PrismaMariaDb) {
+      if (!PrismaPg) {
         throw new Error(
-          "@prisma/adapter-mariadb is not installed. Prisma 7 requires an explicit driver adapter " +
-            "to connect to MySQL/MariaDB — run `npm install @prisma/adapter-mariadb`."
+          "@prisma/adapter-pg is not installed. Prisma 7 requires an explicit driver adapter " +
+            "to connect to PostgreSQL — run `npm install @prisma/adapter-pg pg`."
         );
       }
-      const adapter = new PrismaMariaDb(withPoolTuning(dbUrl));
+      const adapter = new PrismaPg(poolConfig(dbUrl));
       prismaInstance = new PrismaClient({ adapter });
       if (process.env.NODE_ENV !== "production") {
         globalForPrisma.prisma = prismaInstance;

@@ -11,6 +11,13 @@ import { DOMAIN_ID } from "@/lib/site-config";
  * schema) — so schema.prisma marks it @@ignore and this file talks to it via $queryRaw/
  * $executeRaw instead of a generated model delegate, mirroring admin_settings.php's own
  * SELECT/UPDATE/INSERT-if-missing pattern exactly (see the block comment on each function).
+ *
+ * NOTE on the `DOMAIN` column: schema.prisma declares the field as `DOMAIN` (no @map), and
+ * Prisma's migration engine always double-quotes identifiers exactly as written when it
+ * creates them — so the real Postgres column is the case-sensitive `"DOMAIN"`, not lowercase
+ * `domain`. Every raw-SQL reference below MUST quote it as `"DOMAIN"`; an unquoted `DOMAIN` in
+ * a raw query gets folded to lowercase by Postgres and fails with `column "domain" does not
+ * exist` (this bit us once already — see the fix that added these quotes).
  */
 
 export interface SettingRow {
@@ -28,14 +35,14 @@ export async function getSettingsGroup(grouptitle: string, domainId: number = DO
   return prisma.$queryRaw<SettingRow[]>`
     SELECT varname, grouptitle, value, optioncode, optioncode_type, optioncode_parse_type, validationcode
     FROM find_settings
-    WHERE grouptitle = ${grouptitle} AND DOMAIN = ${domainId}
+    WHERE grouptitle = ${grouptitle} AND "DOMAIN" = ${domainId}
     ORDER BY varname
   `;
 }
 
 export async function getSetting(varname: string, domainId: number = DOMAIN_ID): Promise<string | null> {
   const rows = await prisma.$queryRaw<{ value: string | null }[]>`
-    SELECT value FROM find_settings WHERE varname = ${varname} AND DOMAIN = ${domainId} LIMIT 1
+    SELECT value FROM find_settings WHERE varname = ${varname} AND "DOMAIN" = ${domainId} LIMIT 1
   `;
   return rows[0]?.value ?? null;
 }
@@ -57,12 +64,12 @@ export async function defineSetting(input: {
   const domainId = input.domainId ?? DOMAIN_ID;
   const optioncodeType = input.optioncodeType ?? "text";
   const existing = await prisma.$queryRaw<{ varname: string }[]>`
-    SELECT varname FROM find_settings WHERE varname = ${input.varname} AND DOMAIN = ${domainId} LIMIT 1
+    SELECT varname FROM find_settings WHERE varname = ${input.varname} AND "DOMAIN" = ${domainId} LIMIT 1
   `;
   if (existing.length > 0) return;
 
   await prisma.$executeRaw`
-    INSERT INTO find_settings (varname, grouptitle, value, optioncode, optioncode_type, optioncode_parse_type, validationcode, DOMAIN)
+    INSERT INTO find_settings (varname, grouptitle, value, optioncode, optioncode_type, optioncode_parse_type, validationcode, "DOMAIN")
     VALUES (${input.varname}, ${input.grouptitle}, ${input.value}, NULL, ${optioncodeType}, 'static', NULL, ${domainId})
   `;
 }
@@ -76,12 +83,12 @@ export async function defineSetting(input: {
  */
 export async function setSetting(varname: string, value: string, domainId: number = DOMAIN_ID): Promise<void> {
   const existing = await prisma.$queryRaw<{ varname: string }[]>`
-    SELECT varname FROM find_settings WHERE varname = ${varname} AND DOMAIN = ${domainId} LIMIT 1
+    SELECT varname FROM find_settings WHERE varname = ${varname} AND "DOMAIN" = ${domainId} LIMIT 1
   `;
 
   if (existing.length > 0) {
     await prisma.$executeRaw`
-      UPDATE find_settings SET value = ${value} WHERE varname = ${varname} AND DOMAIN = ${domainId}
+      UPDATE find_settings SET value = ${value} WHERE varname = ${varname} AND "DOMAIN" = ${domainId}
     `;
     return;
   }
@@ -97,7 +104,7 @@ export async function setSetting(varname: string, value: string, domainId: numbe
   }
   const meta = parent[0];
   await prisma.$executeRaw`
-    INSERT INTO find_settings (varname, grouptitle, value, optioncode, optioncode_type, optioncode_parse_type, validationcode, DOMAIN)
+    INSERT INTO find_settings (varname, grouptitle, value, optioncode, optioncode_type, optioncode_parse_type, validationcode, "DOMAIN")
     VALUES (${varname}, ${meta.grouptitle}, ${value}, ${meta.optioncode}, ${meta.optioncode_type}, ${meta.optioncode_parse_type}, ${meta.validationcode}, ${domainId})
   `;
 }

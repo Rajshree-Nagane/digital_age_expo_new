@@ -21,6 +21,9 @@
  * after your first sign-in (Settings/User Management, once that screen ships) if that matters
  * to you, or pass a different one now — see the bottom of this file.
  */
+import "dotenv/config"; // running via `npx tsx` doesn't auto-load .env the way Next.js does —
+// without this, process.env.DATABASE_URL is empty, src/lib/prisma.ts silently falls back to its
+// in-memory mock client, and every "Created..." line below would be fake (nothing persisted).
 import { prisma } from "@/lib/prisma";
 import { DOMAIN_ID } from "@/lib/site-config";
 import { generateSalt, hashPassword } from "@/lib/auth/password";
@@ -174,6 +177,41 @@ async function main() {
 
   console.log("Seeding CP sidebar (find_dashboard_menu)...");
   await ensureMenuItem({ title: "Dashboard", icon: "dashboard", link: "/cp", orderby: 0 });
+  await ensureMenuItem({
+    title: "Events",
+    icon: "events",
+    link: "/cp/events",
+    orderby: 2,
+    permission: CP_PERMISSIONS.EVENTS_VIEW,
+  });
+  await ensureMenuItem({
+    title: "Users",
+    icon: "users",
+    link: "/cp/users",
+    orderby: 4,
+    permission: CP_PERMISSIONS.USERS_VIEW,
+  });
+  await ensureMenuItem({
+    title: "Menu Manager",
+    icon: "menu",
+    link: "/cp/menu-manager",
+    orderby: 6,
+    permission: CP_PERMISSIONS.MENU_MANAGER_VIEW,
+  });
+  await ensureMenuItem({
+    title: "Member Menu",
+    icon: "menu",
+    link: "/cp/member-menu",
+    orderby: 7,
+    permission: CP_PERMISSIONS.MEMBER_MENU_VIEW,
+  });
+  await ensureMenuItem({
+    title: "Email Templates",
+    icon: "email",
+    link: "/cp/email-templates",
+    orderby: 8,
+    permission: CP_PERMISSIONS.EMAIL_TEMPLATES_VIEW,
+  });
   await ensureMenuItem({
     title: "General Settings",
     icon: "settings",

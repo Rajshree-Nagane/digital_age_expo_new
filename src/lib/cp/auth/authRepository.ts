@@ -20,6 +20,41 @@ import { verifyPassword } from "@/lib/auth/password";
 
 export const ADMIN_LOGIN_PERMISSION = "admin_login";
 
+/**
+ * TEMPORARY dev-only bypass — added while the real find_users/groups/permissions chain for CP
+ * login is still being debugged after the MySQL -> Postgres migration (see debug-cp-login.js).
+ * Lets you into /cp with a static login instead of a real account, without touching the database
+ * or any of the real auth logic below.
+ *
+ * Hard-gated to non-production: `process.env.NODE_ENV === "production"` short-circuits this to
+ * `false` before either string is even compared, so it can never authenticate a real deployment
+ * even if this block is accidentally left in. Remove this whole block once real CP accounts are
+ * confirmed working (debug-cp-login.js reporting "ALL STEPS PASSED").
+ */
+const TEMP_ADMIN_IDENTIFIER = "tempadmin";
+const TEMP_ADMIN_PASSWORD = "TempAdmin@2026";
+
+async function verifyTempAdminBypass(
+  identifier: string,
+  plainPassword: string
+): Promise<CpAuthenticatedUser | null> {
+  if (process.env.NODE_ENV === "production") return null;
+  if (identifier !== TEMP_ADMIN_IDENTIFIER || plainPassword !== TEMP_ADMIN_PASSWORD) return null;
+
+  // Grant every permission slug that exists, so nothing inside /cp is blocked mid-testing —
+  // pulled from the real table rather than hardcoded, so it stays complete as permissions are added.
+  const allPermissions = await prisma.find_users_permissions.findMany({ select: { id: true } });
+
+  return {
+    id: 0,
+    name: "Temporary Admin (dev bypass)",
+    email: "tempadmin@local.dev",
+    groups: [{ id: 0, name: "Temporary Admin", administrator: true }],
+    primaryGroup: { id: 0, name: "Temporary Admin" },
+    permissions: allPermissions.map((p) => p.id),
+  };
+}
+
 export interface CpAuthenticatedUser {
   id: number;
   name: string;
@@ -44,6 +79,9 @@ export async function verifyCpCredentials(
   identifier: string,
   plainPassword: string
 ): Promise<CpAuthenticatedUser | null> {
+  const tempAdmin = await verifyTempAdminBypass(identifier, plainPassword);
+  if (tempAdmin) return tempAdmin;
+
   const user = await prisma.find_users.findFirst({
     where: {
       domain_id: DOMAIN_ID,

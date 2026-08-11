@@ -1,15 +1,34 @@
 /**
- * Social Media field catalog — a 1:1 match to find_domains's Social Media columns, and the
- * same set the legacy admin form's "Social Media" fieldset exposes (facebook/instagram/
- * youtube/google/linkedin/twitter).
+ * Social Media platform catalog. Five platforms (facebook/instagram/linkedin/twitter/youtube)
+ * already have a real find_domains column for their URL — those are reused as-is. The other
+ * three (TikTok/WhatsApp/Pinterest) have no legacy column, so their URL lives in find_settings
+ * instead, the same "new setting" pattern used throughout this module. Enabled/order are new
+ * for ALL eight platforms (find_domains never had that concept) — always find_settings.
+ *
+ * `google` (a legacy Google Business Profile link, not one of the requested 8 platforms) is
+ * kept working on the page as its own separate legacy field, unrelated to this list — see
+ * page.tsx / actions.ts.
  */
-export const SOCIAL_MEDIA_FIELDS = [
-  { key: "facebook", label: "Facebook URL", type: "text" },
-  { key: "instagram", label: "Instagram URL", type: "text" },
-  { key: "youtube", label: "YouTube URL", type: "text" },
-  // "google" is the legacy column name as-is — historically a Google+/Google Business profile
-  // link, not a Google Analytics ID or API key; kept unchanged since that's what find_domains calls it.
-  { key: "google", label: "Google (Profile / Business Link)", type: "text" },
-  { key: "twitter", label: "Twitter / X URL", type: "text" },
-  { key: "linkedin", label: "LinkedIn URL", type: "text" },
+export const SOCIAL_PLATFORMS = [
+  { key: "facebook", label: "Facebook", urlSource: "domain" },
+  { key: "instagram", label: "Instagram", urlSource: "domain" },
+  { key: "linkedin", label: "LinkedIn", urlSource: "domain" },
+  { key: "twitter", label: "X / Twitter", urlSource: "domain" },
+  { key: "youtube", label: "YouTube", urlSource: "domain" },
+  { key: "tiktok", label: "TikTok", urlSource: "setting" },
+  { key: "whatsapp", label: "WhatsApp", urlSource: "setting" },
+  { key: "pinterest", label: "Pinterest", urlSource: "setting" },
 ] as const;
+
+export type SocialPlatformKey = (typeof SOCIAL_PLATFORMS)[number]["key"];
+
+export function urlFieldName(key: SocialPlatformKey): string {
+  const platform = SOCIAL_PLATFORMS.find((p) => p.key === key)!;
+  return platform.urlSource === "domain" ? key : `cp_social_${key}_url`;
+}
+export function enabledFieldName(key: SocialPlatformKey): string {
+  return `cp_social_${key}_enabled`;
+}
+export function orderFieldName(key: SocialPlatformKey): string {
+  return `cp_social_${key}_order`;
+}

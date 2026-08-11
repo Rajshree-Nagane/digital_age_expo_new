@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { DOMAIN_ID, DEFAULT_EVENT_ID, DEFAULT_LISTING_ID, ACTIVE_EVENT_SETTING_VARNAME } from "@/lib/site-config";
 
@@ -13,7 +14,7 @@ import { DOMAIN_ID, DEFAULT_EVENT_ID, DEFAULT_LISTING_ID, ACTIVE_EVENT_SETTING_V
 async function getActiveEventIdSetting(): Promise<number | null> {
   try {
     const rows = await prisma.$queryRaw<{ value: string | null }[]>`
-      SELECT value FROM find_settings WHERE varname = ${ACTIVE_EVENT_SETTING_VARNAME} AND DOMAIN = ${DOMAIN_ID} LIMIT 1
+      SELECT value FROM find_settings WHERE varname = ${ACTIVE_EVENT_SETTING_VARNAME} AND "DOMAIN" = ${DOMAIN_ID} LIMIT 1
     `;
     const raw = rows[0]?.value;
     const parsed = raw ? Number(raw) : NaN;
@@ -24,7 +25,15 @@ async function getActiveEventIdSetting(): Promise<number | null> {
   }
 }
 
-export async function getDomain() {
+/**
+ * Wrapped in React's cache() (request-scoped memoization, cleared between requests — not a
+ * cross-request cache) because getDomain() is called independently from dozens of page/layout
+ * files plus every render of the root Header, each doing its own 2 sequential DB round-trips
+ * (the active-event setting, then the find_domains row). Without this, a single page load could
+ * fire that same pair of queries 2-4+ times over. cache() makes every call within one request
+ * share a single in-flight/resolved promise instead.
+ */
+export const getDomain = cache(async function getDomain() {
   // Resolved independently of the find_domains lookup below so a missing/unreachable
   // find_domains row still gets the CP's chosen active event (not just the hardcoded
   // fallback) whenever the setting itself is readable.
@@ -85,6 +94,6 @@ export async function getDomain() {
     linkedin: "",
     twitter: "",
   };
-}
+});
 
 export type SiteDomain = Awaited<ReturnType<typeof getDomain>>;

@@ -157,14 +157,15 @@ export async function listUsers(params: {
     franchiseUsers.map((f) => [f.id, `${f.user_first_name} ${f.user_last_name}`.trim() || null])
   );
 
-  // Raw SQL, not a typed Prisma select: DATE_FORMAT forces MySQL to hand back plain text for
-  // `created` (even for a zero-date row) instead of a value Prisma has to parse into a JS
-  // Date — see the createdLabel doc comment above for why that matters here. userIds is our
-  // own just-fetched list of numeric ids, never user input, so building this IN (...) list
+  // Raw SQL, not a typed Prisma select: TO_CHAR (Postgres's equivalent of MySQL's DATE_FORMAT)
+  // forces the DB to hand back plain text for `created` (even for a zero-date row, now stored
+  // as 1970-01-01 post-migration) instead of a value Prisma has to parse into a JS Date — see
+  // the createdLabel doc comment above for why that matters here. userIds is our own
+  // just-fetched list of numeric ids, never user input, so building this IN (...) list
   // directly is safe.
   const createdRows = userIds.length
     ? await prisma.$queryRawUnsafe<{ id: number; created_label: string | null }[]>(
-        `SELECT id, DATE_FORMAT(created, '%Y-%m-%d') AS created_label FROM find_users WHERE id IN (${userIds.join(",")})`
+        `SELECT id, TO_CHAR(created, 'YYYY-MM-DD') AS created_label FROM find_users WHERE id IN (${userIds.join(",")})`
       )
     : [];
   const createdLabelById = new Map(createdRows.map((r) => [r.id, normalizeDateLabel(r.created_label)]));

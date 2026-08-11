@@ -13,7 +13,7 @@ import { CP_SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/cp/auth/sessio
  * context). Edge runtime can't use Node's `crypto` module, which is exactly why
  * lib/cp/auth/session.ts's verify() is built on the Web Crypto API instead.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const token = request.cookies.get(CP_SESSION_COOKIE_NAME)?.value;
   const session = await verifySessionToken(token);
 
