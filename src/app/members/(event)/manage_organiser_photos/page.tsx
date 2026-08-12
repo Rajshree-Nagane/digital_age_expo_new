@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Plus, Pencil, Trash2, Search, X, CheckCircle2, Image as ImageIcon, ZoomIn, Calendar, Eye, Compass } from "lucide-react";
 import { TablePagination } from "@/components/dashboard/TablePagination";
 
@@ -66,6 +67,11 @@ export default function ManageOrganiserPhotosPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [zoomImage, setZoomImage] = useState<OrganiserPhoto | null>(null);
   const [editingPhoto, setEditingPhoto] = useState<OrganiserPhoto | null>(null);
+
+  // Modals are portaled to document.body, so they must wait for client mount
+  // before rendering (document isn't available during SSR).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Form Inputs
   const [formTitle, setFormTitle] = useState("");
@@ -269,129 +275,135 @@ export default function ManageOrganiserPhotosPage() {
       <TablePagination currentPage={page} totalItems={filtered.length} pageSize={pageSize} onPageChange={setPage} className="mt-4" />
 
       {/* Zoom lightbox modal */}
-      {zoomImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4" onClick={() => setZoomImage(null)}>
-          <button className="absolute top-4 right-4 text-white hover:text-zinc-400 shrink-0">
-            <X className="h-8 w-8" />
-          </button>
-          <div className="max-w-4xl w-full flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={zoomImage.imageUrl}
-              alt={zoomImage.title}
-              className="max-h-[80vh] w-full object-contain rounded-xl border border-white/10 shadow-2xl"
-            />
-            <div className="p-3 bg-zinc-950/80 backdrop-blur-md border border-white/10 rounded-xl text-white flex justify-between items-center">
-              <div>
-                <h3 className="text-base font-black">{zoomImage.title}</h3>
-                <p className="text-xs text-zinc-400 mt-0.5">Category: {zoomImage.category} • Uploaded: {zoomImage.uploadedAt}</p>
+      {zoomImage &&
+        mounted &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4" onClick={() => setZoomImage(null)}>
+            <button className="absolute top-4 right-4 text-white hover:text-zinc-400 shrink-0">
+              <X className="h-8 w-8" />
+            </button>
+            <div className="max-w-4xl w-full flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={zoomImage.imageUrl}
+                alt={zoomImage.title}
+                className="max-h-[80vh] w-full object-contain rounded-xl border border-white/10 shadow-2xl"
+              />
+              <div className="p-3 bg-zinc-950/80 backdrop-blur-md border border-white/10 rounded-xl text-white flex justify-between items-center">
+                <div>
+                  <h3 className="text-base font-black">{zoomImage.title}</h3>
+                  <p className="text-xs text-zinc-400 mt-0.5">Category: {zoomImage.category} • Uploaded: {zoomImage.uploadedAt}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setZoomImage(null);
+                    openEditModal(zoomImage);
+                  }}
+                  className="inline-flex items-center gap-1 rounded-full btn-brand-gradient px-4 py-2 text-xs font-bold"
+                >
+                  <Pencil className="h-3.5 w-3.5" /> Edit Photo
+                </button>
               </div>
-              <button
-                onClick={() => {
-                  setZoomImage(null);
-                  openEditModal(zoomImage);
-                }}
-                className="inline-flex items-center gap-1 rounded-full btn-brand-gradient px-4 py-2 text-xs font-bold"
-              >
-                <Pencil className="h-3.5 w-3.5" /> Edit Photo
-              </button>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
 
       {/* Add / Edit Form Modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md animate-fade-in">
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-zinc-950 border border-white/10 p-6 shadow-2xl text-white">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <h3 className="text-lg font-black uppercase tracking-wider brand-gradient-text">
-                {editingPhoto ? "Edit Photo Details" : "Upload Official Photo"}
-              </h3>
-              <button onClick={() => setModalOpen(false)} className="text-zinc-400 hover:text-white transition">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSave} className="mt-5 grid gap-4">
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-zinc-300">Photo Title*</label>
-                <input
-                  type="text"
-                  required
-                  value={formTitle}
-                  onChange={(e) => setFormTitle(e.target.value)}
-                  className={FIELD_CLASS}
-                  placeholder="e.g. Closing Address Crowd Shot"
-                />
+      {modalOpen &&
+        mounted &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md animate-fade-in">
+            <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-zinc-950 border border-white/10 p-6 shadow-2xl text-white">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <h3 className="text-lg font-black uppercase tracking-wider brand-gradient-text">
+                  {editingPhoto ? "Edit Photo Details" : "Upload Official Photo"}
+                </h3>
+                <button onClick={() => setModalOpen(false)} className="text-zinc-400 hover:text-white transition">
+                  <X className="h-5 w-5" />
+                </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <form onSubmit={handleSave} className="mt-5 grid gap-4">
                 <div>
-                  <label className="mb-1 block text-sm font-semibold text-zinc-300">Category</label>
-                  <select
-                    value={formCategory}
-                    onChange={(e) => setFormCategory(e.target.value)}
+                  <label className="mb-1 block text-sm font-semibold text-zinc-300">Photo Title*</label>
+                  <input
+                    type="text"
+                    required
+                    value={formTitle}
+                    onChange={(e) => setFormTitle(e.target.value)}
                     className={FIELD_CLASS}
-                  >
-                    {CATEGORIES.slice(1).map((cat) => (
-                      <option key={cat} value={cat} className="bg-zinc-950 text-white">
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="e.g. Closing Address Crowd Shot"
+                  />
                 </div>
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-zinc-300">Media Source</label>
-                  <div className="rounded-xl border border-dashed border-white/20 bg-white/5 p-2 text-center text-xs text-zinc-400 cursor-pointer hover:bg-white/10 transition">
-                    Drag/Select File
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-zinc-300">Category</label>
+                    <select
+                      value={formCategory}
+                      onChange={(e) => setFormCategory(e.target.value)}
+                      className={FIELD_CLASS}
+                    >
+                      {CATEGORIES.slice(1).map((cat) => (
+                        <option key={cat} value={cat} className="bg-zinc-950 text-white">
+                          {cat}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-zinc-300">Media Source</label>
+                    <div className="rounded-xl border border-dashed border-white/20 bg-white/5 p-2 text-center text-xs text-zinc-400 cursor-pointer hover:bg-white/10 transition">
+                      Drag/Select File
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-zinc-300">Simulated / Remote Image URL</label>
-                <input
-                  type="text"
-                  required
-                  value={formImage}
-                  onChange={(e) => setFormImage(e.target.value)}
-                  className={FIELD_CLASS}
-                />
-              </div>
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-zinc-300">Simulated / Remote Image URL</label>
+                  <input
+                    type="text"
+                    required
+                    value={formImage}
+                    onChange={(e) => setFormImage(e.target.value)}
+                    className={FIELD_CLASS}
+                  />
+                </div>
 
-              <div className="flex items-center gap-2 py-2">
-                <input
-                  type="checkbox"
-                  id="featuredCheck"
-                  checked={formFeatured}
-                  onChange={(e) => setFormFeatured(e.target.checked)}
-                  className="h-4 w-4 rounded border-white/10 bg-zinc-950 text-brand-pink focus:ring-brand-pink"
-                />
-                <label htmlFor="featuredCheck" className="text-xs text-zinc-300 font-semibold cursor-pointer select-none">
-                  Feature this photo prominently on the event homepage banner
-                </label>
-              </div>
+                <div className="flex items-center gap-2 py-2">
+                  <input
+                    type="checkbox"
+                    id="featuredCheck"
+                    checked={formFeatured}
+                    onChange={(e) => setFormFeatured(e.target.checked)}
+                    className="h-4 w-4 rounded border-white/10 bg-zinc-950 text-brand-pink focus:ring-brand-pink"
+                  />
+                  <label htmlFor="featuredCheck" className="text-xs text-zinc-300 font-semibold cursor-pointer select-none">
+                    Feature this photo prominently on the event homepage banner
+                  </label>
+                </div>
 
-              <div className="flex justify-end gap-3 border-t border-white/10 pt-4 mt-2">
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="rounded-full border border-white/10 px-5 py-2.5 text-sm font-semibold text-zinc-300 hover:bg-white/5 hover:text-white transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-full btn-brand-gradient px-6 py-2.5 text-sm font-bold text-white transition"
-                >
-                  Save Photo
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                <div className="flex justify-end gap-3 border-t border-white/10 pt-4 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setModalOpen(false)}
+                    className="rounded-full border border-white/10 px-5 py-2.5 text-sm font-semibold text-zinc-300 hover:bg-white/5 hover:text-white transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-full btn-brand-gradient px-6 py-2.5 text-sm font-bold text-white transition"
+                  >
+                    Save Photo
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

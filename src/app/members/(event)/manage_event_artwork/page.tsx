@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Plus, Pencil, Trash2, Search, X, CheckSquare, XSquare, Clock, LayoutGrid, List, FileImage, CheckCircle2 } from "lucide-react";
 import { TablePagination } from "@/components/dashboard/TablePagination";
 
@@ -79,6 +80,11 @@ export default function ManageEventArtworkPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingArtwork, setEditingArtwork] = useState<ArtworkSubmission | null>(null);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
+
+  // Modals are portaled to document.body, so they must wait for client mount
+  // before rendering (document isn't available during SSR).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Form inputs
   const [formExhibitor, setFormExhibitor] = useState("");
@@ -354,142 +360,148 @@ export default function ManageEventArtworkPage() {
       </div>
 
       {/* Submission modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md animate-fade-in">
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-zinc-950 border border-white/10 p-6 shadow-2xl text-white">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <h3 className="text-lg font-black uppercase tracking-wider brand-gradient-text">
-                {editingArtwork ? "Edit Submission" : "Submit Stand Artwork"}
-              </h3>
-              <button onClick={() => setModalOpen(false)} className="text-zinc-400 hover:text-white transition">
-                <X className="h-5 w-5" />
-              </button>
+      {modalOpen &&
+        mounted &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md animate-fade-in">
+            <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-zinc-950 border border-white/10 p-6 shadow-2xl text-white">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <h3 className="text-lg font-black uppercase tracking-wider brand-gradient-text">
+                  {editingArtwork ? "Edit Submission" : "Submit Stand Artwork"}
+                </h3>
+                <button onClick={() => setModalOpen(false)} className="text-zinc-400 hover:text-white transition">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSave} className="mt-5 grid gap-4">
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-zinc-300">Exhibitor Company Name*</label>
+                  <input
+                    type="text"
+                    required
+                    value={formExhibitor}
+                    onChange={(e) => setFormExhibitor(e.target.value)}
+                    className={FIELD_CLASS}
+                    placeholder="e.g. Zenith Tech Corp"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-zinc-300">Stand Number*</label>
+                    <input
+                      type="text"
+                      required
+                      value={formStand}
+                      onChange={(e) => setFormStand(e.target.value)}
+                      className={FIELD_CLASS}
+                      placeholder="e.g. A15"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-zinc-300">Banner Type</label>
+                    <select
+                      value={formBannerType}
+                      onChange={(e) => setFormBannerType(e.target.value)}
+                      className={FIELD_CLASS}
+                    >
+                      <option className="bg-zinc-950 text-white">Main Backdrop Banner</option>
+                      <option className="bg-zinc-950 text-white">Reception Counter Front</option>
+                      <option className="bg-zinc-950 text-white">Roll-up Banner Standard</option>
+                      <option className="bg-zinc-950 text-white">Fascia Nameboard</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-zinc-300">Dimensions Spec</label>
+                    <input
+                      type="text"
+                      required
+                      value={formDimensions}
+                      onChange={(e) => setFormDimensions(e.target.value)}
+                      className={FIELD_CLASS}
+                      placeholder="e.g. 3000 x 2400 mm"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-zinc-300">Mock Image URL</label>
+                    <input
+                      type="text"
+                      required
+                      value={formImage}
+                      onChange={(e) => setFormImage(e.target.value)}
+                      className={FIELD_CLASS}
+                    />
+                  </div>
+                </div>
+
+                {editingArtwork && (
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-zinc-300">Review Status</label>
+                    <select
+                      value={formStatus}
+                      onChange={(e) => setFormStatus(e.target.value as any)}
+                      className={FIELD_CLASS}
+                    >
+                      <option value="Pending" className="bg-zinc-950 text-white">Pending</option>
+                      <option value="Approved" className="bg-zinc-950 text-white">Approved</option>
+                      <option value="Rejected" className="bg-zinc-950 text-white">Rejected</option>
+                    </select>
+                  </div>
+                )}
+
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-zinc-300">Feedback / Comments</label>
+                  <textarea
+                    value={formComments}
+                    onChange={(e) => setFormComments(e.target.value)}
+                    rows={3}
+                    className={FIELD_CLASS}
+                    placeholder="Approve checklist notes or correction specs if rejected..."
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 border-t border-white/10 pt-4 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setModalOpen(false)}
+                    className="rounded-full border border-white/10 px-5 py-2.5 text-sm font-semibold text-zinc-300 hover:bg-white/5 hover:text-white transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-full btn-brand-gradient px-6 py-2.5 text-sm font-bold text-white transition"
+                  >
+                    {editingArtwork ? "Update Review" : "Submit Artwork"}
+                  </button>
+                </div>
+              </form>
             </div>
-
-            <form onSubmit={handleSave} className="mt-5 grid gap-4">
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-zinc-300">Exhibitor Company Name*</label>
-                <input
-                  type="text"
-                  required
-                  value={formExhibitor}
-                  onChange={(e) => setFormExhibitor(e.target.value)}
-                  className={FIELD_CLASS}
-                  placeholder="e.g. Zenith Tech Corp"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-zinc-300">Stand Number*</label>
-                  <input
-                    type="text"
-                    required
-                    value={formStand}
-                    onChange={(e) => setFormStand(e.target.value)}
-                    className={FIELD_CLASS}
-                    placeholder="e.g. A15"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-zinc-300">Banner Type</label>
-                  <select
-                    value={formBannerType}
-                    onChange={(e) => setFormBannerType(e.target.value)}
-                    className={FIELD_CLASS}
-                  >
-                    <option className="bg-zinc-950 text-white">Main Backdrop Banner</option>
-                    <option className="bg-zinc-950 text-white">Reception Counter Front</option>
-                    <option className="bg-zinc-950 text-white">Roll-up Banner Standard</option>
-                    <option className="bg-zinc-950 text-white">Fascia Nameboard</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-zinc-300">Dimensions Spec</label>
-                  <input
-                    type="text"
-                    required
-                    value={formDimensions}
-                    onChange={(e) => setFormDimensions(e.target.value)}
-                    className={FIELD_CLASS}
-                    placeholder="e.g. 3000 x 2400 mm"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-zinc-300">Mock Image URL</label>
-                  <input
-                    type="text"
-                    required
-                    value={formImage}
-                    onChange={(e) => setFormImage(e.target.value)}
-                    className={FIELD_CLASS}
-                  />
-                </div>
-              </div>
-
-              {editingArtwork && (
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-zinc-300">Review Status</label>
-                  <select
-                    value={formStatus}
-                    onChange={(e) => setFormStatus(e.target.value as any)}
-                    className={FIELD_CLASS}
-                  >
-                    <option value="Pending" className="bg-zinc-950 text-white">Pending</option>
-                    <option value="Approved" className="bg-zinc-950 text-white">Approved</option>
-                    <option value="Rejected" className="bg-zinc-950 text-white">Rejected</option>
-                  </select>
-                </div>
-              )}
-
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-zinc-300">Feedback / Comments</label>
-                <textarea
-                  value={formComments}
-                  onChange={(e) => setFormComments(e.target.value)}
-                  rows={3}
-                  className={FIELD_CLASS}
-                  placeholder="Approve checklist notes or correction specs if rejected..."
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 border-t border-white/10 pt-4 mt-2">
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="rounded-full border border-white/10 px-5 py-2.5 text-sm font-semibold text-zinc-300 hover:bg-white/5 hover:text-white transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-full btn-brand-gradient px-6 py-2.5 text-sm font-bold text-white transition"
-                >
-                  {editingArtwork ? "Update Review" : "Submit Artwork"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
 
       {/* Image Viewer Zoom Modal */}
-      {viewingImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4" onClick={() => setViewingImage(null)}>
-          <button className="absolute top-4 right-4 text-white hover:text-zinc-400">
-            <X className="h-8 w-8" />
-          </button>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={viewingImage}
-            alt="Expanded Artwork"
-            className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg border border-white/10 shadow-2xl"
-          />
-        </div>
-      )}
+      {viewingImage &&
+        mounted &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4" onClick={() => setViewingImage(null)}>
+            <button className="absolute top-4 right-4 text-white hover:text-zinc-400">
+              <X className="h-8 w-8" />
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={viewingImage}
+              alt="Expanded Artwork"
+              className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg border border-white/10 shadow-2xl"
+            />
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

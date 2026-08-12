@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Search, X, ShieldAlert, BadgeCheck, CheckCircle2, User, Phone, Mail, Award, Landmark, Eye, Pencil, Plus } from "lucide-react";
 import { TablePagination } from "@/components/dashboard/TablePagination";
 
@@ -93,6 +94,11 @@ export default function ViewExhibitorInformationPage() {
   const [selectedExhibitor, setSelectedExhibitor] = useState<ExhibitorDetail | null>(null);
   const [editingExhibitor, setEditingExhibitor] = useState<ExhibitorDetail | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  // Overlays are portaled to document.body, so they must wait for client mount
+  // before rendering (document isn't available during SSR).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Form states
   const [formCompany, setFormCompany] = useState("");
@@ -353,299 +359,299 @@ export default function ViewExhibitorInformationPage() {
 
       <TablePagination currentPage={page} totalItems={filtered.length} pageSize={pageSize} onPageChange={setPage} className="mt-4" />
 
-      {/* Details View Drawer Modal */}
-      {selectedExhibitor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/70 backdrop-blur-sm animate-fade-in">
-          <div className="h-full w-full max-w-md bg-zinc-950 border-l border-white/10 p-6 shadow-2xl overflow-y-auto text-white flex flex-col justify-between">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-brand-pink">Exhibitor Details</span>
-                  <h3 className="text-xl font-black text-white">{selectedExhibitor.companyName}</h3>
+      {/* Details View Drawer (right-aligned by design, not centered) */}
+      {selectedExhibitor &&
+        mounted &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/70 backdrop-blur-sm animate-fade-in">
+            <div className="h-full w-full max-w-md bg-zinc-950 border-l border-white/10 p-6 shadow-2xl overflow-y-auto text-white flex flex-col justify-between">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-brand-pink">Exhibitor Details</span>
+                    <h3 className="text-xl font-black text-white">{selectedExhibitor.companyName}</h3>
+                  </div>
+                  <button onClick={() => setSelectedExhibitor(null)} className="text-zinc-400 hover:text-white transition">
+                    <X className="h-5 w-5" />
+                  </button>
                 </div>
-                <button onClick={() => setSelectedExhibitor(null)} className="text-zinc-400 hover:text-white transition">
+
+                {/* Stand Allocation */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400">Stand Allocation</h4>
+                  <div className="rounded-xl border border-white/5 bg-white/5 p-4 grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="block text-xs text-zinc-500">Stand Number</span>
+                      <strong className="text-white text-base">{selectedExhibitor.standNumber}</strong>
+                    </div>
+                    <div>
+                      <span className="block text-xs text-zinc-500">Hall Location</span>
+                      <strong className="text-white text-sm">{selectedExhibitor.zone}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Representative Information */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400">Primary Contact</h4>
+                  <div className="rounded-xl border border-white/5 bg-white/5 p-4 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <User className="h-4 w-4 text-brand-pink" />
+                      <div>
+                        <span className="block text-[10px] text-zinc-500">Full Name</span>
+                        <strong className="text-sm text-zinc-200">{selectedExhibitor.repName}</strong>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Mail className="h-4 w-4 text-brand-pink" />
+                      <div>
+                        <span className="block text-[10px] text-zinc-500">Email Address</span>
+                        <a href={`mailto:${selectedExhibitor.repEmail}`} className="text-sm text-brand-purple hover:underline">
+                          {selectedExhibitor.repEmail}
+                        </a>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Phone className="h-4 w-4 text-brand-pink" />
+                      <div>
+                        <span className="block text-[10px] text-zinc-500">Phone Number</span>
+                        <strong className="text-sm text-zinc-200">{selectedExhibitor.repPhone}</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Technical / Operations requirements */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400">Technical Specs</h4>
+                  <div className="rounded-xl border border-white/5 bg-white/5 p-4 space-y-3 text-sm">
+                    <div>
+                      <span className="block text-xs text-zinc-500">Electrical Socket Requests</span>
+                      <p className="text-zinc-200 mt-1 font-medium">{selectedExhibitor.electricalRequirements || "None requested"}</p>
+                    </div>
+                    <div>
+                      <span className="block text-xs text-zinc-500">Stand Furniture Requests</span>
+                      <p className="text-zinc-200 mt-1 font-medium">{selectedExhibitor.furnitureRequirements || "None requested"}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* administrative statuses */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400">Workflow Checklist</h4>
+                  <div className="rounded-xl border border-white/5 bg-white/5 p-4 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-zinc-400 flex items-center gap-1.5">
+                        <Landmark className="h-3.5 w-3.5 text-zinc-500" /> Stand Fee Invoice
+                      </span>
+                      <span className={INVOICE_CLASSES[selectedExhibitor.invoiceStatus]}>
+                        {selectedExhibitor.invoiceStatus}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-zinc-400 flex items-center gap-1.5">
+                        <Award className="h-3.5 w-3.5 text-zinc-500" /> Graphics Submission
+                      </span>
+                      {selectedExhibitor.artworkReviewed ? (
+                        <span className="text-emerald-400 text-xs font-bold flex items-center gap-1">
+                          <BadgeCheck className="h-4 w-4" /> Approved
+                        </span>
+                      ) : (
+                        <span className="text-amber-400 text-xs font-bold flex items-center gap-1">
+                          <ShieldAlert className="h-4 w-4" /> Missing
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-6 border-t border-white/10 mt-6">
+                <button
+                  onClick={() => {
+                    setSelectedExhibitor(null);
+                    openEditModal(selectedExhibitor);
+                  }}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full btn-brand-gradient py-3 text-sm font-bold text-white transition"
+                >
+                  <Pencil className="h-4 w-4" /> Edit Profile
+                </button>
+                <button
+                  onClick={() => setSelectedExhibitor(null)}
+                  className="flex-1 rounded-full border border-white/10 py-3 text-sm font-semibold text-zinc-300 hover:bg-white/5 transition"
+                >
+                  Close Drawer
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {/* Add / Edit Form Modal (centered) */}
+      {modalOpen &&
+        mounted &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md animate-fade-in">
+            <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-zinc-950 border border-white/10 p-6 shadow-2xl text-white">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <h3 className="text-lg font-black uppercase tracking-wider brand-gradient-text">
+                  {editingExhibitor ? "Edit Exhibitor Registration" : "Register Exhibitor"}
+                </h3>
+                <button onClick={() => { setEditingExhibitor(null); setModalOpen(false); }} className="text-zinc-400 hover:text-white transition">
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
-              {/* Stand Allocation */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400">Stand Allocation</h4>
-                <div className="rounded-xl border border-white/5 bg-white/5 p-4 grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="block text-xs text-zinc-500">Stand Number</span>
-                    <strong className="text-white text-base">{selectedExhibitor.standNumber}</strong>
-                  </div>
-                  <div>
-                    <span className="block text-xs text-zinc-500">Hall Location</span>
-                    <strong className="text-white text-sm">{selectedExhibitor.zone}</strong>
-                  </div>
-                </div>
-              </div>
-
-              {/* Representative Information */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400">Primary Contact</h4>
-                <div className="rounded-xl border border-white/5 bg-white/5 p-4 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <User className="h-4 w-4 text-brand-pink" />
-                    <div>
-                      <span className="block text-[10px] text-zinc-500">Full Name</span>
-                      <strong className="text-sm text-zinc-200">{selectedExhibitor.repName}</strong>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Mail className="h-4 w-4 text-brand-pink" />
-                    <div>
-                      <span className="block text-[10px] text-zinc-500">Email Address</span>
-                      <a href={`mailto:${selectedExhibitor.repEmail}`} className="text-sm text-brand-purple hover:underline">
-                        {selectedExhibitor.repEmail}
-                      </a>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Phone className="h-4 w-4 text-brand-pink" />
-                    <div>
-                      <span className="block text-[10px] text-zinc-500">Phone Number</span>
-                      <strong className="text-sm text-zinc-200">{selectedExhibitor.repPhone}</strong>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Technical / Operations requirements */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400">Technical Specs</h4>
-                <div className="rounded-xl border border-white/5 bg-white/5 p-4 space-y-3 text-sm">
-                  <div>
-                    <span className="block text-xs text-zinc-500">Electrical Socket Requests</span>
-                    <p className="text-zinc-200 mt-1 font-medium">{selectedExhibitor.electricalRequirements || "None requested"}</p>
-                  </div>
-                  <div>
-                    <span className="block text-xs text-zinc-500">Stand Furniture Requests</span>
-                    <p className="text-zinc-200 mt-1 font-medium">{selectedExhibitor.furnitureRequirements || "None requested"}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* administrative statuses */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400">Workflow Checklist</h4>
-                <div className="rounded-xl border border-white/5 bg-white/5 p-4 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-zinc-400 flex items-center gap-1.5">
-                      <Landmark className="h-3.5 w-3.5 text-zinc-500" /> Stand Fee Invoice
-                    </span>
-                    <span className={INVOICE_CLASSES[selectedExhibitor.invoiceStatus]}>
-                      {selectedExhibitor.invoiceStatus}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-zinc-400 flex items-center gap-1.5">
-                      <Award className="h-3.5 w-3.5 text-zinc-500" /> Graphics Submission
-                    </span>
-                    {selectedExhibitor.artworkReviewed ? (
-                      <span className="text-emerald-400 text-xs font-bold flex items-center gap-1">
-                        <BadgeCheck className="h-4 w-4" /> Approved
-                      </span>
-                    ) : (
-                      <span className="text-amber-400 text-xs font-bold flex items-center gap-1">
-                        <ShieldAlert className="h-4 w-4" /> Missing
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-2 pt-6 border-t border-white/10 mt-6">
-              <button
-                onClick={() => {
-                  setSelectedExhibitor(null);
-                  openEditModal(selectedExhibitor);
-                }}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full btn-brand-gradient py-3 text-sm font-bold text-white transition"
-              >
-                <Pencil className="h-4 w-4" /> Edit Profile
-              </button>
-              <button
-                onClick={() => setSelectedExhibitor(null)}
-                className="flex-1 rounded-full border border-white/10 py-3 text-sm font-semibold text-zinc-300 hover:bg-white/5 transition"
-              >
-                Close Drawer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add / Edit Form Modal */}
-      {editingExhibitor !== null || formCompany === "" && formStand === "" && editingExhibitor === undefined ? (
-        // Render form logic if open
-        null
-      ) : null}
-
-      {/* Form Overlay */}
-      {(editingExhibitor !== null || (formCompany === "" && formStand === "" && !modalOpen ? false : modalOpen)) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md animate-fade-in">
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-zinc-950 border border-white/10 p-6 shadow-2xl text-white">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <h3 className="text-lg font-black uppercase tracking-wider brand-gradient-text">
-                {editingExhibitor ? "Edit Exhibitor Registration" : "Register Exhibitor"}
-              </h3>
-              <button onClick={() => { setEditingExhibitor(null); setModalOpen(false); }} className="text-zinc-400 hover:text-white transition">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSave} className="mt-5 grid gap-4">
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-zinc-300">Company Name*</label>
-                <input
-                  type="text"
-                  required
-                  value={formCompany}
-                  onChange={(e) => setFormCompany(e.target.value)}
-                  className={FIELD_CLASS}
-                  placeholder="e.g. Zenith Software"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+              <form onSubmit={handleSave} className="mt-5 grid gap-4">
                 <div>
-                  <label className="mb-1 block text-sm font-semibold text-zinc-300">Stand Number*</label>
+                  <label className="mb-1 block text-sm font-semibold text-zinc-300">Company Name*</label>
                   <input
                     type="text"
                     required
-                    value={formStand}
-                    onChange={(e) => setFormStand(e.target.value)}
+                    value={formCompany}
+                    onChange={(e) => setFormCompany(e.target.value)}
                     className={FIELD_CLASS}
-                    placeholder="e.g. B04"
+                    placeholder="e.g. Zenith Software"
                   />
                 </div>
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-zinc-300">Zone</label>
-                  <select
-                    value={formZone}
-                    onChange={(e) => setFormZone(e.target.value)}
-                    className={FIELD_CLASS}
-                  >
-                    {ZONES.slice(1).map((z) => (
-                      <option key={z} value={z} className="bg-zinc-950 text-white">
-                        {z}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
 
-              <div className="border-t border-white/10 pt-3">
-                <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400 mb-3">Primary Contact Representative</h4>
-                <div className="grid gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-zinc-300">Representative Name</label>
+                    <label className="mb-1 block text-sm font-semibold text-zinc-300">Stand Number*</label>
                     <input
                       type="text"
                       required
-                      value={formRepName}
-                      onChange={(e) => setFormRepName(e.target.value)}
+                      value={formStand}
+                      onChange={(e) => setFormStand(e.target.value)}
                       className={FIELD_CLASS}
+                      placeholder="e.g. B04"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-zinc-300">Zone</label>
+                    <select
+                      value={formZone}
+                      onChange={(e) => setFormZone(e.target.value)}
+                      className={FIELD_CLASS}
+                    >
+                      {ZONES.slice(1).map((z) => (
+                        <option key={z} value={z} className="bg-zinc-950 text-white">
+                          {z}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="border-t border-white/10 pt-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400 mb-3">Primary Contact Representative</h4>
+                  <div className="grid gap-3">
                     <div>
-                      <label className="mb-1 block text-xs font-semibold text-zinc-300">Email Address</label>
-                      <input
-                        type="email"
-                        required
-                        value={formRepEmail}
-                        onChange={(e) => setFormRepEmail(e.target.value)}
-                        className={FIELD_CLASS}
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold text-zinc-300">Phone Number</label>
+                      <label className="mb-1 block text-xs font-semibold text-zinc-300">Representative Name</label>
                       <input
                         type="text"
                         required
-                        value={formRepPhone}
-                        onChange={(e) => setFormRepPhone(e.target.value)}
+                        value={formRepName}
+                        onChange={(e) => setFormRepName(e.target.value)}
+                        className={FIELD_CLASS}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold text-zinc-300">Email Address</label>
+                        <input
+                          type="email"
+                          required
+                          value={formRepEmail}
+                          onChange={(e) => setFormRepEmail(e.target.value)}
+                          className={FIELD_CLASS}
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold text-zinc-300">Phone Number</label>
+                        <input
+                          type="text"
+                          required
+                          value={formRepPhone}
+                          onChange={(e) => setFormRepPhone(e.target.value)}
+                          className={FIELD_CLASS}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-white/10 pt-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400 mb-3">Stand Requirements</h4>
+                  <div className="grid gap-3">
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-zinc-300">Electrical Socket Specifications</label>
+                      <input
+                        type="text"
+                        value={formElectrical}
+                        onChange={(e) => setFormElectrical(e.target.value)}
+                        className={FIELD_CLASS}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-zinc-300">Furniture Request Details</label>
+                      <input
+                        type="text"
+                        value={formFurniture}
+                        onChange={(e) => setFormFurniture(e.target.value)}
                         className={FIELD_CLASS}
                       />
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="border-t border-white/10 pt-3">
-                <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400 mb-3">Stand Requirements</h4>
-                <div className="grid gap-3">
+                <div className="border-t border-white/10 pt-3 grid grid-cols-2 gap-4">
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-zinc-300">Electrical Socket Specifications</label>
-                    <input
-                      type="text"
-                      value={formElectrical}
-                      onChange={(e) => setFormElectrical(e.target.value)}
+                    <label className="mb-1 block text-xs font-semibold text-zinc-300">Stand Invoice Status</label>
+                    <select
+                      value={formInvoice}
+                      onChange={(e) => setFormInvoice(e.target.value as any)}
                       className={FIELD_CLASS}
-                    />
+                    >
+                      <option value="Paid" className="bg-zinc-950 text-white">Paid</option>
+                      <option value="Pending" className="bg-zinc-950 text-white">Pending</option>
+                      <option value="Overdue" className="bg-zinc-950 text-white">Overdue</option>
+                    </select>
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-zinc-300">Furniture Request Details</label>
-                    <input
-                      type="text"
-                      value={formFurniture}
-                      onChange={(e) => setFormFurniture(e.target.value)}
+                    <label className="mb-1 block text-xs font-semibold text-zinc-300">Graphics Submitted</label>
+                    <select
+                      value={formArtwork ? "true" : "false"}
+                      onChange={(e) => setFormArtwork(e.target.value === "true")}
                       className={FIELD_CLASS}
-                    />
+                    >
+                      <option value="true" className="bg-zinc-950 text-white">Yes, Reviewed & Approved</option>
+                      <option value="false" className="bg-zinc-950 text-white">No, Outstanding</option>
+                    </select>
                   </div>
                 </div>
-              </div>
 
-              <div className="border-t border-white/10 pt-3 grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-1 block text-xs font-semibold text-zinc-300">Stand Invoice Status</label>
-                  <select
-                    value={formInvoice}
-                    onChange={(e) => setFormInvoice(e.target.value as any)}
-                    className={FIELD_CLASS}
+                <div className="flex justify-end gap-3 border-t border-white/10 pt-4 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => { setEditingExhibitor(null); setModalOpen(false); }}
+                    className="rounded-full border border-white/10 px-5 py-2.5 text-sm font-semibold text-zinc-300 hover:bg-white/5 hover:text-white transition"
                   >
-                    <option value="Paid" className="bg-zinc-950 text-white">Paid</option>
-                    <option value="Pending" className="bg-zinc-950 text-white">Pending</option>
-                    <option value="Overdue" className="bg-zinc-950 text-white">Overdue</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-semibold text-zinc-300">Graphics Submitted</label>
-                  <select
-                    value={formArtwork ? "true" : "false"}
-                    onChange={(e) => setFormArtwork(e.target.value === "true")}
-                    className={FIELD_CLASS}
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-full btn-brand-gradient px-6 py-2.5 text-sm font-bold text-white transition"
                   >
-                    <option value="true" className="bg-zinc-950 text-white">Yes, Reviewed & Approved</option>
-                    <option value="false" className="bg-zinc-950 text-white">No, Outstanding</option>
-                  </select>
+                    Save Profile
+                  </button>
                 </div>
-              </div>
-
-              <div className="flex justify-end gap-3 border-t border-white/10 pt-4 mt-2">
-                <button
-                  type="button"
-                  onClick={() => { setEditingExhibitor(null); setModalOpen(false); }}
-                  className="rounded-full border border-white/10 px-5 py-2.5 text-sm font-semibold text-zinc-300 hover:bg-white/5 hover:text-white transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-full btn-brand-gradient px-6 py-2.5 text-sm font-bold text-white transition"
-                >
-                  Save Profile
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+              </form>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

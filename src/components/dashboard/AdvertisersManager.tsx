@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -75,6 +76,11 @@ function AdvertiserFormModal({
 }) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const isEdit = typeof defaultValues?.id === "number";
+
+  // Modal is portaled to document.body, so it must wait for client mount
+  // before rendering (document isn't available during SSR).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const {
     register,
@@ -166,7 +172,9 @@ function AdvertiserFormModal({
     }
   }
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
       <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/10 bg-zinc-950 p-6 shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
@@ -440,7 +448,8 @@ function AdvertiserFormModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -457,6 +466,11 @@ function AmountOverrideModal({
   const [price, setPrice] = useState(advertiser.advertSizePrice);
   const [discount, setDiscount] = useState(advertiser.discount);
   const [charitable, setCharitable] = useState(advertiser.charitableAmount);
+
+  // Modal is portaled to document.body, so it must wait for client mount
+  // before rendering (document isn't available during SSR).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const finalAmount = Math.max(0, price - discount - charitable);
 
@@ -501,7 +515,9 @@ function AmountOverrideModal({
     }
   }
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-zinc-950 p-6 shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
@@ -587,7 +603,8 @@ function AmountOverrideModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
