@@ -252,7 +252,7 @@ export default function GlimpseOfTheShowPage() {
           {[
             {
               title: "Exhibition Lobby",
-              video: staticAssetUrl("https://findusonweb.com/files/listing_pages/Digital Age Expo Intro.mp4"),
+              video: staticAssetUrl("/images/Digital Age Expo Intro.mp4"),
             },
             {
               title: "Welcome area",
