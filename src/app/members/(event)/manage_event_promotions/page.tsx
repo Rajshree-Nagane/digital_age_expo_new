@@ -39,8 +39,8 @@ export default async function ManageEventPromotionsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-black uppercase text-indigo-950">Manage Promotions</h1>
-      <p className="mt-2 text-indigo-950/70">Manage promotional offers and codes advertised for this event.</p>
+      <h1 className="text-2xl font-black uppercase brand-gradient-text">Manage Promotions</h1>
+      <p className="text-sm text-zinc-400 font-medium mt-1">Manage promotional offers and codes advertised for this event.</p>
 
       <div className="mt-6">
         <EventPromotionsManager promotions={promotions} />

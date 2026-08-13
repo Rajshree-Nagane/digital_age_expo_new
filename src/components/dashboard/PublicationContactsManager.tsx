@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -39,6 +40,11 @@ function PublicationContactFormModal({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const isEdit = typeof defaultValues?.id === "number";
 
+  // Modal is portaled to document.body, so it must wait for client mount
+  // before rendering (document isn't available during SSR).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const {
     register,
     handleSubmit,
@@ -72,7 +78,9 @@ function PublicationContactFormModal({
     }
   }
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md animate-fade-in">
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-zinc-950 border border-white/10 p-6 shadow-2xl text-white">
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
@@ -134,7 +142,8 @@ function PublicationContactFormModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

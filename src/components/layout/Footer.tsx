@@ -2,10 +2,20 @@ import Image from "next/image";
 import Link from "next/link";
 import { getDomain } from "@/lib/services/domain";
 import { NewsletterForm } from "@/components/layout/NewsletterForm";
+import {
+  Mail,
+  Phone,
+  MapPin,
+  ArrowUpRight,
+  ExternalLink,
+} from "lucide-react";
 
 const QUICK_LINKS = [
   { href: "/free-ticket", label: "Visitor Registration" },
-  { href: "/exhibitor-registration?action=register", label: "Exhibitor Registration" },
+  {
+    href: "/exhibitor-registration?action=register",
+    label: "Exhibitor Registration",
+  },
   { href: "/speaker_registration", label: "Speakers Registration" },
   { href: "/speaker-questionaire", label: "Speaker Questionnaire" },
   { href: "/why-sponsor", label: "Sponsorship Registration" },
@@ -13,91 +23,330 @@ const QUICK_LINKS = [
   { href: "/articles", label: "Knowledge Center" },
   { href: "/marketing-toolkit", label: "Marketing Toolkit" },
   { href: "/business_club", label: "Business Club Membership" },
-  { href: "/frequently-asked-questions", label: "FAQs" },
+  {
+    href: "/frequently-asked-questions",
+    label: "Frequently Asked Questions",
+  },
   { href: "/charity-partnership", label: "Charity Partnership" },
   { href: "/event-services", label: "Addon Services" },
 ];
 
-const SOCIAL = (domain: Awaited<ReturnType<typeof getDomain>>) =>
-  [
-    { label: "Facebook", href: domain.facebook },
-    { label: "Twitter", href: domain.twitter },
-    { label: "Instagram", href: domain.instagram },
-    { label: "YouTube", href: domain.youtube },
-    { label: "LinkedIn", href: domain.linkedin },
-  ].filter((s): s is { label: string; href: string } => !!s.href);
+const SOCIAL_CONFIG = [
+  {
+    key: "facebook",
+    label: "Facebook",
+    short: "FB",
+  },
+  {
+    key: "twitter",
+    label: "Twitter",
+    short: "X",
+  },
+  {
+    key: "instagram",
+    label: "Instagram",
+    short: "IG",
+  },
+  {
+    key: "youtube",
+    label: "YouTube",
+    short: "YT",
+  },
+  {
+    key: "linkedin",
+    label: "LinkedIn",
+    short: "IN",
+  },
+] as const;
 
 export async function Footer() {
   const domain = await getDomain();
-  const socialLinks = SOCIAL(domain);
+
+  const socialLinks = SOCIAL_CONFIG.map((social) => ({
+    ...social,
+    href: domain[social.key],
+  })).filter(
+    (
+      social
+    ): social is typeof social & {
+      href: string;
+    } => Boolean(social.href)
+  );
+
+  const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-black text-white">
-      <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 sm:grid-cols-3">
-        <div>
-          <Image
-            src="/images/logo-footer.jpg"
-            alt={domain.name}
-            width={180}
-            height={32}
-            className="h-8 w-auto"
-          />
-          <div className="mt-4 space-y-1 text-white/70">
-            {domain.email && <p>Email: {domain.email}</p>}
-            {domain.phone && <p>Call: {domain.phone}</p>}
-          </div>
-          {socialLinks.length > 0 && (
-            <div className="mt-6 flex gap-3">
-              {socialLinks.map((social) => (
-                <a
-                  key={social.label}
-                  href={social.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-wide text-white/80 transition hover:border-brand-pink hover:text-brand-pink"
-                >
-                  {social.label}
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
+    <footer className="relative overflow-hidden bg-[#03010a] text-white">
+      {/* =========================================================
+          BACKGROUND
+      ========================================================== */}
 
-        <div>
-          <h3 className="brand-gradient-text text-lg font-bold">Quick Links</h3>
-          <ul className="mt-4 space-y-2 text-sm text-white/70">
-            {QUICK_LINKS.map((link) => (
-              <li key={link.href}>
-                <Link href={link.href} className="hover:text-white">
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-            {domain.partner_url && (
-              <li>
-                <a href={domain.partner_url} target="_blank" rel="noreferrer" className="hover:text-white">
-                  Franchise Opportunity
-                </a>
-              </li>
-            )}
-          </ul>
-        </div>
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -left-40 top-0 h-[420px] w-[420px] rounded-full bg-purple-700/10 blur-[140px]" />
 
-        <div>
-          <h3 className="brand-gradient-text text-lg font-bold">Newsletter</h3>
-          <p className="mt-4 text-sm text-white/70">
-            Don&apos;t miss a thing! Sign up for free to receive your copy of the monthly {domain.name}{" "}
-            newsletter and keep up to date with all the latest show and industry news.
-          </p>
-          <div className="mt-4">
-            <NewsletterForm />
-          </div>
-        </div>
+        <div className="absolute -right-40 bottom-0 h-[420px] w-[420px] rounded-full bg-fuchsia-600/10 blur-[140px]" />
+
+        <div
+          className="absolute inset-0 opacity-[0.025]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
+            backgroundSize: "50px 50px",
+          }}
+        />
       </div>
 
-      <div className="border-t border-white/10 py-6 text-center text-xs text-white/50">
-        &copy; {new Date().getFullYear()} {domain.name}. 71-75 Shelton Street, London, Greater London,
-        United Kingdom, WC2H 9JQ
+      {/* TOP GRADIENT */}
+      <div className="relative h-[2px] w-full bg-gradient-to-r from-purple-700 via-fuchsia-500 to-pink-600" />
+
+      {/* =========================================================
+          MAIN FOOTER
+      ========================================================== */}
+
+      <div className="relative z-10 mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:px-8">
+        <div className="grid gap-12 lg:grid-cols-[1.25fr_1fr_1fr]">
+          {/* =====================================================
+              BRAND
+          ====================================================== */}
+
+          <div>
+            {/* LOGO */}
+
+            <Link
+              href="/"
+              className="group inline-flex items-center"
+              aria-label={domain.name}
+            >
+              <div className="relative rounded-xl border border-white/10 bg-white/[0.03] px-5 py-3 transition-all duration-300 group-hover:border-fuchsia-500/30 group-hover:bg-white/[0.06]">
+                <Image
+                  src="/images/logo-footer.jpg"
+                  alt={domain.name}
+                  width={220}
+                  height={55}
+                  priority
+                  className="h-auto max-h-12 w-auto object-contain"
+                />
+              </div>
+            </Link>
+
+            {/* DESCRIPTION */}
+
+            <p className="mt-6 max-w-md text-sm leading-7 text-zinc-400">
+              Connect, discover and grow at the Digital Age Expo. Explore
+              innovative businesses, meet industry leaders and build valuable
+              connections through our global business event.
+            </p>
+
+            {/* CONTACT */}
+
+            <div className="mt-7 space-y-3">
+              {domain.email && (
+                <a
+                  href={`mailto:${domain.email}`}
+                  className="group flex items-center gap-3 text-sm text-zinc-400 transition hover:text-white"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] transition group-hover:border-fuchsia-500/40 group-hover:bg-fuchsia-500/10">
+                    <Mail
+                      size={16}
+                      className="text-fuchsia-400"
+                    />
+                  </span>
+
+                  <span className="break-all">
+                    {domain.email}
+                  </span>
+                </a>
+              )}
+
+              {domain.phone && (
+                <a
+                  href={`tel:${domain.phone}`}
+                  className="group flex items-center gap-3 text-sm text-zinc-400 transition hover:text-white"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] transition group-hover:border-purple-500/40 group-hover:bg-purple-500/10">
+                    <Phone
+                      size={16}
+                      className="text-purple-400"
+                    />
+                  </span>
+
+                  <span>{domain.phone}</span>
+                </a>
+              )}
+
+             
+            </div>
+
+            {/* SOCIAL */}
+
+            {socialLinks.length > 0 && (
+              <div className="mt-7">
+                <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+                  Follow Us
+                </p>
+
+                <div className="flex flex-wrap gap-2">
+                  {socialLinks.map((social) => (
+                    <a
+                      key={social.label}
+                      href={social.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={social.label}
+                      title={social.label}
+                      className="group flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-zinc-400 transition-all duration-300 hover:-translate-y-1 hover:border-fuchsia-500/50 hover:bg-gradient-to-br hover:from-purple-600/20 hover:to-fuchsia-500/20 hover:text-white hover:shadow-lg hover:shadow-fuchsia-900/20"
+                    >
+                      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white/10 text-[9px] font-black">
+                        {social.short}
+                      </span>
+
+                      <span className="text-xs font-semibold">
+                        {social.label}
+                      </span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* =====================================================
+              QUICK LINKS
+          ====================================================== */}
+
+          <div>
+            <div className="mb-6">
+              <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-fuchsia-400">
+                Explore
+              </p>
+
+              <h3 className="mt-2 text-xl font-bold text-white">
+                Quick Links
+              </h3>
+
+              <div className="mt-3 h-[2px] w-12 rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500" />
+            </div>
+
+            <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              {QUICK_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="group flex items-center gap-2 text-sm text-zinc-400 transition-all duration-200 hover:translate-x-1 hover:text-white"
+                >
+                  <ArrowUpRight
+                    size={14}
+                    className="shrink-0 text-fuchsia-500 opacity-0 transition-all duration-200 group-hover:opacity-100"
+                  />
+
+                  <span>{link.label}</span>
+                </Link>
+              ))}
+
+              {domain.partner_url && (
+                <a
+                  href={domain.partner_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group flex items-center gap-2 text-sm text-zinc-400 transition-all duration-200 hover:translate-x-1 hover:text-white"
+                >
+                  <ExternalLink
+                    size={14}
+                    className="shrink-0 text-fuchsia-500 opacity-0 transition-all duration-200 group-hover:opacity-100"
+                  />
+
+                  <span>Franchise Opportunity</span>
+                </a>
+              )}
+            </div>
+          </div>
+
+          {/* =====================================================
+              NEWSLETTER
+          ====================================================== */}
+
+          <div>
+            <div className="mb-6">
+              <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-purple-400">
+                Stay Connected
+              </p>
+
+              <h3 className="mt-2 text-xl font-bold text-white">
+                Join Our Newsletter
+              </h3>
+
+              <div className="mt-3 h-[2px] w-12 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-500" />
+            </div>
+
+            <p className="text-sm leading-7 text-zinc-400">
+              Don&apos;t miss a thing! Subscribe to receive the latest{" "}
+              {domain.name} news, event updates, industry insights and
+              opportunities directly in your inbox.
+            </p>
+
+            <div className="relative mt-6 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.02] p-5 shadow-2xl">
+              <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-fuchsia-600/10 blur-3xl" />
+
+              <div className="relative">
+                <p className="text-sm font-semibold text-white">
+                  Get event updates
+                </p>
+
+                <p className="mt-1 text-xs leading-5 text-zinc-500">
+                  Stay informed about upcoming events and opportunities.
+                </p>
+
+                <div className="mt-4">
+                  <NewsletterForm />
+                </div>
+              </div>
+            </div>
+
+           
+          </div>
+        </div>
+
+        
+      </div>
+
+      {/* =========================================================
+          BOTTOM BAR
+      ========================================================== */}
+
+      <div className="relative z-10 border-t border-white/10 bg-black/30">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-5 py-5 text-center sm:px-6 md:flex-row md:text-left lg:px-8">
+          <p className="text-xs text-zinc-500">
+            © {currentYear}{" "}
+            <span className="font-semibold text-zinc-400">
+              {domain.name}
+            </span>
+            . All rights reserved.
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-500">
+            <Link
+              href="/privacy-policy"
+              className="transition hover:text-white"
+            >
+              Privacy Policy
+            </Link>
+
+            <span className="h-1 w-1 rounded-full bg-zinc-700" />
+
+            <Link
+              href="/terms-and-conditions"
+              className="transition hover:text-white"
+            >
+              Terms & Conditions
+            </Link>
+
+            <span className="h-1 w-1 rounded-full bg-zinc-700" />
+
+            <span className="text-zinc-600">
+              Digital Age Expo
+            </span>
+          </div>
+        </div>
       </div>
     </footer>
   );

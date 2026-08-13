@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
 
   images: {
     remotePatterns: [
+      // Digital Age Expo
       {
         protocol: "https",
         hostname: "digitalageexpo.com",
@@ -19,6 +20,20 @@ const nextConfig: NextConfig = {
         hostname: "www.digitalageexpo.com",
         pathname: "/**",
       },
+
+      // Apps Digital Age Expo
+      {
+        protocol: "https",
+        hostname: "apps.digitalageexpo.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "www.apps.digitalageexpo.com",
+        pathname: "/**",
+      },
+
+      // Tradeshow Local
       {
         protocol: "https",
         hostname: "tradeshowslocal.com",
@@ -29,6 +44,8 @@ const nextConfig: NextConfig = {
         hostname: "www.tradeshowslocal.com",
         pathname: "/**",
       },
+
+      // Find Us On Web
       {
         protocol: "https",
         hostname: "findusonweb.com",
