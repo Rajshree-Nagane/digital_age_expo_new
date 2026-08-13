@@ -58,7 +58,7 @@ export default function EventFeaturesPage() {
     {
       title: "Your Custom Exhibition Stand",
       badge: "Exhibitor Booth",
-      image: staticAssetUrl("/images/exhibitor_stand.png"),
+      image: staticAssetUrl("/images/exhibition.png"),
       description:
         "Your dedicated 24/7 digital booth engineered for lead conversion, collateral downloads, and live buyer conversations.",
       points: [
@@ -89,7 +89,7 @@ export default function EventFeaturesPage() {
     {
       title: "Visit Our Networking Lounge",
       badge: "Connections & Lounge",
-      image: staticAssetUrl("/images/networking_lounge.png"),
+      image: staticAssetUrl("/images/event_zone.png"),
       description:
         "Connect in real-time with fellow entrepreneurs, investors, suppliers, and prospective partners.",
       points: [
