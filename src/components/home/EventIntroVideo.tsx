@@ -2,7 +2,7 @@ import Link from "next/link";
 import { staticAssetUrl } from "@/lib/assets";
 
 const INTRO_VIDEO_URL =
-  staticAssetUrl("https://findusonweb.com/files/listing_pages/817601-05_INTRO_OK-1.mp4");
+  staticAssetUrl("/images/817601-05_INTRO_OK-1.mp4");
 
 export function EventIntroVideo() {
   return (

@@ -52,7 +52,7 @@ export function Hero3DBackground() {
           transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
         >
           <div
-            className="h-full w-full rounded-2xl border border-brand-pink/40 bg-gradient-to-br from-brand-pink/20 via-fuchsia-500/10 to-transparent shadow-[0_0_60px_rgba(var(--color-brand-pink-rgb), 0.35)] backdrop-blur-sm"
+            className="h-full w-full rounded-2xl border border-brand-pink/40 bg-gradient-to-br from-brand-pink/20 via-fuchsia-500/10 to-transparent shadow-[0_0_60px_rgb(var(--color-brand-pink-rgb) / 0.35)] backdrop-blur-sm"
             style={{ transform: "translateZ(40px)" }}
           />
         </motion.div>
@@ -65,7 +65,7 @@ export function Hero3DBackground() {
           transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
         >
           <div
-            className="h-full w-full rounded-full border border-brand-purple/50 bg-gradient-to-tr from-brand-purple/25 to-transparent shadow-[0_0_50px_rgba(var(--color-brand-purple-rgb), 0.4)]"
+            className="h-full w-full rounded-full border border-brand-purple/50 bg-gradient-to-tr from-brand-purple/25 to-transparent shadow-[0_0_50px_rgb(var(--color-brand-purple-rgb) / 0.4)]"
             style={{ transform: "translateZ(30px)" }}
           />
         </motion.div>

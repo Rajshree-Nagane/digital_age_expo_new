@@ -9,14 +9,31 @@ export const metadata = {
   title: "Contact Us - Digital Age Expo 2026",
 };
 
+/**
+ * Palette note: this page follows the site chrome rather than Tailwind's default
+ * slate/fuchsia ramps. The Navbar sits on `zinc-900`/`surface-2` and the Footer on
+ * `#03010a`, both purple-black — so a `slate-950` page (#020617, a blue-black) read
+ * as a different colour sandwiched between them. Everything here now uses the
+ * tokens declared in src/app/globals.css: `zinc-950` surfaces, `zinc-300/400/500`
+ * body text, and `brand-pink` / `brand-purple` accents.
+ */
 export default async function ContactPage() {
   const domain = await getDomain();
   const event = domain.event_id ? await getEventById(domain.event_id) : null;
 
   return (
-    <div className="bg-slate-950 text-white min-h-screen">
+    <div className="relative min-h-screen overflow-hidden bg-zinc-950 text-white">
+      {/* Ambient brand glow — same treatment as the footer, so the page reads as one surface */}
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <div className="absolute -left-40 top-32 h-[420px] w-[420px] rounded-full bg-brand-purple/20 blur-[140px]" />
+        <div className="absolute -right-40 top-[45%] h-[420px] w-[420px] rounded-full bg-brand-pink/10 blur-[140px]" />
+      </div>
+
       {/* Visual Cover Hero Section */}
-      <div id="contact_hero" className="relative w-full min-h-[50vh] sm:min-h-[60vh] flex items-center justify-center py-20 px-4 sm:px-6">
+      <div
+        id="contact_hero"
+        className="relative z-10 flex min-h-[50vh] w-full items-center justify-center px-4 py-20 sm:min-h-[60vh] sm:px-6"
+      >
         {/* Background Image Wrapper */}
         <div className="absolute inset-0 z-0">
           <Image
@@ -24,54 +41,57 @@ export default async function ContactPage() {
             alt="Contact Us Cover"
             fill
             priority
-            className="object-cover opacity-60"
-            referrerPolicy="no-referrer"
+            className="object-cover opacity-50"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-indigo-950/80 z-10" />
+          <div className="absolute inset-0 z-10 bg-gradient-to-t from-zinc-950 via-zinc-950/55 to-brand-purple/50" />
         </div>
 
-        {/* Floating Semi-Transparent Black Card as requested */}
-        <div className="relative z-20 max-w-4xl w-full mx-auto bg-black/75 backdrop-blur-md border border-white/15 p-8 sm:p-12 text-center space-y-6 shadow-2xl animate-fade-in">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-fuchsia-600/20 border border-fuchsia-500/30 rounded-full text-fuchsia-400 text-xs font-black uppercase tracking-widest">
-            <Calendar className="w-3.5 h-3.5" /> 26th - 28th August 2026
+        {/* Floating glass card */}
+        <div className="glass-panel animate-fade-in relative z-20 mx-auto w-full max-w-4xl space-y-6 rounded-3xl p-8 text-center sm:p-12">
+          <div className="inline-flex items-center gap-2 rounded-full border border-brand-pink/30 bg-brand-pink/15 px-3.5 py-1.5 text-xs font-black uppercase tracking-widest text-pink-400">
+            <Calendar className="h-3.5 w-3.5" /> 26th - 28th August 2026
           </div>
-          <h2 className="text-2xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight text-white leading-tight">
-            DIGITAL AGE EXPO 26TH - 28TH AUGUST 2026 | VIRTUAL EVENT
-          </h2>
-          <p className="text-slate-300 text-sm sm:text-lg max-w-xl mx-auto leading-relaxed">
+          <h1 className="text-2xl font-black uppercase leading-tight tracking-tight text-white sm:text-4xl md:text-5xl">
+            Digital Age Expo 26th - 28th August 2026 |{" "}
+            <span className="brand-gradient-text">Virtual Event</span>
+          </h1>
+          <p className="mx-auto max-w-xl text-sm leading-relaxed text-zinc-300 sm:text-lg">
             26 to 28 August 2026, Online Virtual Event
           </p>
         </div>
       </div>
 
       {/* Main Form & Event Metadata Details */}
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-16 -mt-10 relative z-30">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-          
+      <div className="container relative z-20 mx-auto -mt-10 max-w-7xl px-4 py-16 sm:px-6">
+        <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-12">
+
           {/* Left Side: Structured Contact Form Container */}
           <div className="lg:col-span-8">
             <ContactForm />
           </div>
 
           {/* Right Side: Contact Details & Info Sidebar */}
-          <div className="lg:col-span-4 space-y-8">
-            <div className="bg-slate-900 border border-white/10 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
-              <h3 className="text-md font-black uppercase tracking-wide border-b border-white/5 pb-2 text-white">
+          <div className="space-y-8 lg:col-span-4">
+            <div className="glass-panel space-y-6 rounded-3xl p-6 sm:p-8">
+              <h2 className="border-b border-white/10 pb-2 text-base font-black uppercase tracking-wide text-white">
                 Contact Information
-              </h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              </h2>
+              <p className="text-xs leading-relaxed text-zinc-400">
                 If you are looking to secure a stand, submit a seminar proposal, or need technical assistance regarding virtual booths, our support staff is available.
               </p>
 
               <div className="space-y-4 pt-2">
                 {event?.email && (
                   <div className="flex items-start gap-3 text-xs">
-                    <div className="w-8 h-8 bg-pink-500/10 border border-pink-500/20 rounded-xl flex items-center justify-center text-pink-400 shrink-0">
-                      <Mail className="w-4 h-4" />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-brand-pink/25 bg-brand-pink/10 text-pink-400">
+                      <Mail className="h-4 w-4" />
                     </div>
                     <div>
-                      <div className="text-[10px] uppercase font-bold tracking-wider text-slate-500">Email Address</div>
-                      <a href={`mailto:${event.email}`} className="text-white hover:text-pink-400 transition font-medium mt-0.5 block break-all">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Email Address</div>
+                      <a
+                        href={`mailto:${event.email}`}
+                        className="mt-0.5 block break-all font-medium text-white transition hover:text-pink-400"
+                      >
                         {event.email}
                       </a>
                     </div>
@@ -80,12 +100,15 @@ export default async function ContactPage() {
 
                 {event?.phone && (
                   <div className="flex items-start gap-3 text-xs">
-                    <div className="w-8 h-8 bg-pink-500/10 border border-pink-500/20 rounded-xl flex items-center justify-center text-pink-400 shrink-0">
-                      <Phone className="w-4 h-4" />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-brand-pink/25 bg-brand-pink/10 text-pink-400">
+                      <Phone className="h-4 w-4" />
                     </div>
                     <div>
-                      <div className="text-[10px] uppercase font-bold tracking-wider text-slate-500">Call Support</div>
-                      <a href={`tel:${event.phone}`} className="text-white hover:text-pink-400 transition font-medium mt-0.5 block">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Call Support</div>
+                      <a
+                        href={`tel:${event.phone}`}
+                        className="mt-0.5 block font-medium text-white transition hover:text-pink-400"
+                      >
                         {event.phone}
                       </a>
                     </div>
@@ -93,24 +116,24 @@ export default async function ContactPage() {
                 )}
 
                 <div className="flex items-start gap-3 text-xs">
-                  <div className="w-8 h-8 bg-pink-500/10 border border-pink-500/20 rounded-xl flex items-center justify-center text-pink-400 shrink-0">
-                    <MapPin className="w-4 h-4" />
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-brand-pink/25 bg-brand-pink/10 text-pink-400">
+                    <MapPin className="h-4 w-4" />
                   </div>
                   <div>
-                    <div className="text-[10px] uppercase font-bold tracking-wider text-slate-500">Venue Location</div>
-                    <p className="text-white font-medium mt-0.5">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Venue Location</div>
+                    <p className="mt-0.5 font-medium text-white">
                       Online Virtual Platform &amp; Broadcasting Studio
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3 text-xs">
-                  <div className="w-8 h-8 bg-pink-500/10 border border-pink-500/20 rounded-xl flex items-center justify-center text-pink-400 shrink-0">
-                    <Clock className="w-4 h-4" />
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-brand-pink/25 bg-brand-pink/10 text-pink-400">
+                    <Clock className="h-4 w-4" />
                   </div>
                   <div>
-                    <div className="text-[10px] uppercase font-bold tracking-wider text-slate-500">Working Hours</div>
-                    <p className="text-white font-medium mt-0.5">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Working Hours</div>
+                    <p className="mt-0.5 font-medium text-white">
                       Mon - Fri: 09:00 AM - 05:00 PM BST
                     </p>
                   </div>
@@ -119,9 +142,9 @@ export default async function ContactPage() {
             </div>
 
             {/* Quick Helper card */}
-            <div className="bg-indigo-950/40 border border-indigo-900/40 rounded-3xl p-6 text-xs space-y-3">
-              <h4 className="font-bold uppercase tracking-wide text-indigo-300">Fast Resolution</h4>
-              <p className="text-slate-400 leading-relaxed">
+            <div className="space-y-3 rounded-3xl border border-brand-purple/40 bg-brand-purple/15 p-6 text-xs">
+              <h3 className="font-bold uppercase tracking-wide text-purple-300">Fast Resolution</h3>
+              <p className="leading-relaxed text-zinc-400">
                 Most enquiries are resolved within 2 hours during normal broadcasting periods. We appreciate your participation in Digital Age Expo 2026.
               </p>
             </div>

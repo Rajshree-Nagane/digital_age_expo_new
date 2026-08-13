@@ -36,7 +36,7 @@ export function JoinFacebookGroup({
     <section
       className="relative overflow-hidden bg-cover bg-center bg-no-repeat px-6 py-20 text-white"
       style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(var(--color-slate-900-rgb), 0.92), rgba(var(--color-violet-900-rgb), 0.90)), url('${staticAssetUrl("https://digitalageexpo.com/files/listing_pages/818073-dae_index_top_banner.jpg")}')`,
+        backgroundImage: `linear-gradient(to bottom, rgb(var(--color-slate-900-rgb) / 0.92), rgb(var(--color-violet-900-rgb) / 0.90)), url('${staticAssetUrl("https://digitalageexpo.com/files/listing_pages/818073-dae_index_top_banner.jpg")}')`,
       }}
     >
       <div className="relative z-10 mx-auto max-w-5xl">

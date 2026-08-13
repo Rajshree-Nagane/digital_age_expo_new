@@ -30,7 +30,7 @@ export default async function ArticlesPage({ searchParams }: Props) {
     <div id="articles_container" className="bg-slate-950 text-white min-h-screen pb-24">
       {/* Decorative Grid Top Header */}
       <div id="articles_header" className="bg-indigo-950 relative overflow-hidden py-16 sm:py-24 px-6 border-b border-indigo-900">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(var(--color-brand-pink-rgb), 0.15),transparent)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgb(var(--color-brand-pink-rgb) / 0.15),transparent)] pointer-events-none" />
         <div className="container mx-auto max-w-5xl text-center space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-pink-500/10 border border-pink-500/20 rounded-full text-pink-400 text-xs font-black uppercase tracking-widest">
             <BookOpen className="w-3 h-3" /> Knowledge Center

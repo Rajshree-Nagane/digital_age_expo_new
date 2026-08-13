@@ -192,7 +192,7 @@ export function SpeakerQuestionnaireForm({ speakerId, initialValues, venues, dat
     <div className="bg-slate-950 text-white min-h-screen pb-24">
       {/* Dynamic Grid Header */}
       <div className="bg-indigo-950 relative overflow-hidden py-20 px-6 border-b border-indigo-900">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(var(--color-brand-pink-rgb), 0.15),transparent)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgb(var(--color-brand-pink-rgb) / 0.15),transparent)] pointer-events-none" />
         <div className="container mx-auto max-w-4xl text-center space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-pink-500/10 border border-pink-500/20 rounded-full text-pink-400 text-xs font-black uppercase tracking-widest">
             <Mic className="w-3 h-3" /> Speakers Questionnaire

@@ -322,7 +322,7 @@ export function AccountOnboardingManager() {
           RIGHT SIDEBAR: ACTIVE STEP CONTAINER
       ====================================================== */}
       <div className="lg:col-span-8">
-        <div className="relative overflow-hidden rounded-3xl border border-indigo-500/20 bg-zinc-900/60 p-6 sm:p-8 shadow-[0_0_50px_-12px_rgba(var(--color-indigo-500-rgb), 0.15)] backdrop-blur-md min-h-[520px] flex flex-col justify-between">
+        <div className="relative overflow-hidden rounded-3xl border border-indigo-500/20 bg-zinc-900/60 p-6 sm:p-8 shadow-[0_0_50px_-12px_rgb(var(--color-indigo-500-rgb) / 0.15)] backdrop-blur-md min-h-[520px] flex flex-col justify-between">
           
           <AnimatePresence mode="wait">
             <motion.div
@@ -1253,9 +1253,9 @@ export function AccountOnboardingManager() {
                       <label className="text-xs font-black text-indigo-400 uppercase tracking-widest">Live Digital Card Preview</label>
                       <div className={`p-6 rounded-2xl border aspect-[1.6/1] flex flex-col justify-between shadow-2xl transition-all duration-300 relative overflow-hidden ${
                         formData.cardLayout === "dark-glow"
-                          ? "bg-zinc-950 text-white border-indigo-500/30 shadow-[0_4px_30px_rgba(var(--color-indigo-500-rgb), 0.2)]"
+                          ? "bg-zinc-950 text-white border-indigo-500/30 shadow-[0_4px_30px_rgb(var(--color-indigo-500-rgb) / 0.2)]"
                           : formData.cardLayout === "peach-luxury"
-                          ? "bg-warm-bg text-zinc-900 border-warm-border shadow-[0_4px_30px_rgba(var(--color-warm-border-rgb), 0.3)]"
+                          ? "bg-warm-bg text-zinc-900 border-warm-border shadow-[0_4px_30px_rgb(var(--color-warm-border-rgb) / 0.3)]"
                           : "bg-white text-zinc-900 border-zinc-200 shadow-xl"
                       }`}>
                         {/* Style accent circles */}

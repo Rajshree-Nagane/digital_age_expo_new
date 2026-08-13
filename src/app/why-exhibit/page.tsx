@@ -63,7 +63,7 @@ export default async function WhyExhibitPage() {
       <section
         className="relative overflow-hidden bg-cover bg-center bg-no-repeat px-6 py-20 sm:py-28 text-center"
         style={{
-          backgroundImage: `linear-gradient(to bottom, rgba(var(--color-slate-900-rgb), 0.9), rgba(var(--color-violet-900-rgb), 0.85)), url('${staticAssetUrl("https://digitalageexpo.com/files/listing_pages/818073-dae_index_top_banner.jpg")}')`,
+          backgroundImage: `linear-gradient(to bottom, rgb(var(--color-slate-900-rgb) / 0.9), rgb(var(--color-violet-900-rgb) / 0.85)), url('${staticAssetUrl("https://digitalageexpo.com/files/listing_pages/818073-dae_index_top_banner.jpg")}')`,
         }}
       >
         <div className="relative z-10 max-w-4xl mx-auto">
@@ -182,7 +182,7 @@ export default async function WhyExhibitPage() {
           <div className="overflow-hidden rounded-2xl border border-white/20 bg-slate-950 p-2 shadow-2xl">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={staticAssetUrl("/images/exhibitor.jpg")}
+              src={staticAssetUrl("https://apps.digitalageexpo.com/files/listing_pages/817601-exhibitor.jpg")}
               alt="Virtual Stand Feature Showcase"
               className="w-full h-auto rounded-xl object-cover hover:scale-105 transition-transform duration-500"
             />

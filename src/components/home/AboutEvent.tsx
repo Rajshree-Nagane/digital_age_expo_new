@@ -33,7 +33,7 @@ export function AboutEvent({
     <section
       className="relative overflow-hidden bg-cover bg-center bg-no-repeat px-6 py-20 text-white"
       style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(var(--color-slate-900-rgb), 0.8), rgba(var(--color-indigo-950-rgb), 0.82)), url('${bgImage}')`,
+        backgroundImage: `linear-gradient(to bottom, rgb(var(--color-slate-900-rgb) / 0.8), rgb(var(--color-indigo-950-rgb) / 0.82)), url('${bgImage}')`,
       }}
     >
       <div className="relative z-10 mx-auto max-w-5xl">

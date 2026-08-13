@@ -91,7 +91,7 @@ export default async function ExhibitorRegistrationPage({ searchParams }: Props)
       <section
         className="relative overflow-hidden bg-cover bg-center bg-no-repeat px-6 py-20 sm:py-28 text-center"
         style={{
-          backgroundImage: `linear-gradient(to bottom, rgba(var(--color-slate-900-rgb), 0.9), rgba(var(--color-violet-900-rgb), 0.85), rgba(var(--color-slate-900-rgb), 0.95)), url('${staticAssetUrl("https://digitalageexpo.com/files/listing_pages/818073-dae_index_top_banner.jpg")}')`,
+          backgroundImage: `linear-gradient(to bottom, rgb(var(--color-slate-900-rgb) / 0.9), rgb(var(--color-violet-900-rgb) / 0.85), rgb(var(--color-slate-900-rgb) / 0.95)), url('${staticAssetUrl("https://digitalageexpo.com/files/listing_pages/818073-dae_index_top_banner.jpg")}')`,
         }}
       >
         <div className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 h-96 w-96 rounded-full bg-fuchsia-600/30 blur-3xl" />
@@ -200,7 +200,7 @@ export default async function ExhibitorRegistrationPage({ searchParams }: Props)
                   key={index}
                   className="group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/90 p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-fuchsia-500/50 hover:shadow-2xl hover:shadow-fuchsia-950/50 flex flex-col justify-between"
                   style={{
-                    backgroundImage: `linear-gradient(to bottom, rgba(var(--color-slate-900-rgb), 0.85), rgba(var(--color-slate-900-rgb), 0.95)), url('${
+                    backgroundImage: `linear-gradient(to bottom, rgb(var(--color-slate-900-rgb) / 0.85), rgb(var(--color-slate-900-rgb) / 0.95)), url('${
                       assetUrl(gain.image) ||
                       staticAssetUrl("https://digitalageexpo.com/files/listing_pages/817601-backgr.jpg")
                     }')`,
