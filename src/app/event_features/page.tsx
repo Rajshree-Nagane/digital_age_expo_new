@@ -25,7 +25,7 @@ export default function EventFeaturesPage() {
     {
       title: "Welcome To Our Virtual World",
       badge: "Event Lobby",
-      image: staticAssetUrl("https://apps.digitalageexpo.com/images/event_lobby.png"),
+      image: staticAssetUrl("/images/event_lobby.png"),
       description:
         "The central hub where thousands of attendees arrive, navigate to key zones, and discover event highlights.",
       points: [
@@ -42,7 +42,7 @@ export default function EventFeaturesPage() {
     {
       title: "Visit Our Auditorium",
       badge: "Main Stage & Keynotes",
-      image: staticAssetUrl("https://apps.digitalageexpo.com/images/speaker_hall.png"),
+      image: staticAssetUrl("/images/speaker_hall.png"),
       description:
         "Listen to world-renowned speakers covering lead generation, social media, AI strategies, customer acquisition, and enterprise scaling.",
       points: [
@@ -58,7 +58,7 @@ export default function EventFeaturesPage() {
     {
       title: "Your Custom Exhibition Stand",
       badge: "Exhibitor Booth",
-      image: staticAssetUrl("https://apps.digitalageexpo.com/images/exhibitor_stand.png"),
+      image: staticAssetUrl("/images/exhibitor_stand.png"),
       description:
         "Your dedicated 24/7 digital booth engineered for lead conversion, collateral downloads, and live buyer conversations.",
       points: [
@@ -75,7 +75,7 @@ export default function EventFeaturesPage() {
     {
       title: "Visit Our Photo Booth",
       badge: "Social Media & Branding",
-      image: staticAssetUrl("https://apps.digitalageexpo.com/images/photobooth.png"),
+      image: staticAssetUrl("/images/photobooth.png"),
       description:
         "Increase brand shareability across social networks with custom co-branded digital event photo memories.",
       points: [
@@ -89,7 +89,7 @@ export default function EventFeaturesPage() {
     {
       title: "Visit Our Networking Lounge",
       badge: "Connections & Lounge",
-      image: staticAssetUrl("https://apps.digitalageexpo.com/images/networking_lounge.png"),
+      image: staticAssetUrl("/images/networking_lounge.png"),
       description:
         "Connect in real-time with fellow entrepreneurs, investors, suppliers, and prospective partners.",
       points: [

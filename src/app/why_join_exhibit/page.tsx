@@ -93,25 +93,25 @@ export default async function WhyJoinExhibitPage() {
   const features = [
     {
       title: "Exceptional Keynote Speakers",
-      image: staticAssetUrl("https://apps.digitalageexpo.com/files/listing_pages/817601-event_feature3.jpg"),
+      image: staticAssetUrl("/images/event_feature3.jpg"),
       description:
         "Digital Age Expo proudly welcomes industry experts from around the world to share their newest findings, strategies, and business practices on our Keynote Stage.",
     },
     {
       title: "Interactive Masterclasses",
-      image: staticAssetUrl("https://apps.digitalageexpo.com/files/listing_pages/817601-event_feature3.jpg"),
+      image: staticAssetUrl("/images/event_feature3.jpg"),
       description:
         "Opportunity to receive mentoring and education from industry experts covering everything from financing and trademarks to marketing and property.",
     },
     {
       title: "Unparalleled Networking Opportunities",
-      image: staticAssetUrl("https://apps.digitalageexpo.com/files/listing_pages/817601-event_feature4.jpg"),
+      image: staticAssetUrl("/images/event_feature4.jpg"),
       description:
         "Connect with leaders in your industry. Discuss new ideas, business tips, or find out about sourcing and selling the latest cutting-edge products.",
     },
     {
       title: "Source Newest Products & Services",
-      image: staticAssetUrl("https://apps.digitalageexpo.com/files/listing_pages/817601-event_feature1.jpg"),
+      image: staticAssetUrl("/images/event_feature1.jpg"),
       description:
         "Meet over 500 industry-leading exhibitors showcasing all the latest products and services needed to take your business revenue to the next level.",
     },
@@ -301,7 +301,7 @@ export default async function WhyJoinExhibitPage() {
             <div className="overflow-hidden rounded-2xl border border-white/15 bg-slate-900 p-2 shadow-2xl">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={staticAssetUrl("https://apps.digitalageexpo.com/files/listing_pages/817601-exhibitor.jpg")}
+                src={staticAssetUrl("/images/exhibitor.jpg")}
                 alt="Exhibitor Stand Overview"
                 className="w-full h-auto rounded-xl object-cover hover:scale-[1.02] transition-transform duration-300"
               />
@@ -310,7 +310,7 @@ export default async function WhyJoinExhibitPage() {
             <div className="overflow-hidden rounded-2xl border border-white/15 bg-slate-900 p-2 shadow-2xl">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={staticAssetUrl("https://apps.digitalageexpo.com/files/listing_pages/818073-exhibition.png")}
+                src={staticAssetUrl("/images/exhibition.png")}
                 alt="Virtual Exhibition Platform"
                 className="w-full h-auto rounded-xl object-cover hover:scale-[1.02] transition-transform duration-300"
               />
