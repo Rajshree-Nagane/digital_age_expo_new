@@ -203,17 +203,17 @@ export default function GlimpseOfTheShowPage() {
           {[
             {
               title: "Lead Sponsor & Tech Partner",
-              img: staticAssetUrl("https://digitalageexpo.com/files/listing_pages/817601-visualytes.png"),
+              img: staticAssetUrl("/images/visualytes.png"),
               link: "www.visualytes.com",
             },
             {
               title: "Powered by",
-              img: staticAssetUrl("https://digitalageexpo.com/files/listing_pages/817601-tillu_white.png"),
+              img: staticAssetUrl("/images/tillu_white.png"),
               link: "tillu.co.uk",
             },
             {
               title: "Organised By",
-              img: staticAssetUrl("https://digitalageexpo.com/files/listing_pages/818073-209_alternate_logo.png"),
+              img: staticAssetUrl("/images/b2bgrowthhub.png"),
               link: "b2bgrowthhub.com",
             },
           ].map((s, i) => (
@@ -234,6 +234,8 @@ export default function GlimpseOfTheShowPage() {
           ))}
         </div>
       </section>
+     
+
 
       {/* Glimpse of the Show Grid */}
       <section className="max-w-6xl mx-auto px-6 pt-16 space-y-12">
@@ -254,15 +256,15 @@ export default function GlimpseOfTheShowPage() {
             },
             {
               title: "Welcome area",
-              img: staticAssetUrl("https://findusonweb.com/files/listing_pages/817601-333.jpg"),
+              img: staticAssetUrl("/images/photobooth.png"),
             },
             {
               title: "Photo booth",
-              img: staticAssetUrl("https://findusonweb.com/files/listing_pages/817601-photob.jpg"),
+              img: staticAssetUrl("/images/photob.jpg"),
             },
             {
               title: "Exhibition Hall",
-              img: staticAssetUrl("https://findusonweb.com/files/listing_pages/817601-newexhibi.png"),
+              img: staticAssetUrl("/images/speaker_hall.png"),
             },
           ].map((item, i) => (
             <div key={i} className="space-y-3 group">
