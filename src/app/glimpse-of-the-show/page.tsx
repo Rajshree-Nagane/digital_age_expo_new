@@ -252,7 +252,7 @@ export default function GlimpseOfTheShowPage() {
           {[
             {
               title: "Exhibition Lobby",
-              video: staticAssetUrl("/images/Digital Age Expo Intro.mp4"),
+              img: staticAssetUrl("/images/event_lobby.png"),
             },
             {
               title: "Welcome area",
@@ -272,22 +272,13 @@ export default function GlimpseOfTheShowPage() {
                 {item.title}
               </h2>
               <div className="rounded-3xl overflow-hidden border border-white/15 bg-slate-900 shadow-2xl relative group-hover:border-fuchsia-500/50 transition-all">
-                {item.video ? (
-                  <video
-                    src={item.video}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="w-full h-64 sm:h-80 object-cover"
-                  />
-                ) : (
+               
                   <img
                     src={item.img}
                     alt={item.title}
                     className="w-full h-64 sm:h-80 object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                )}
+              
               </div>
             </div>
           ))}
