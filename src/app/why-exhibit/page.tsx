@@ -181,7 +181,7 @@ export default async function WhyExhibitPage() {
           <div className="overflow-hidden rounded-2xl border border-white/20 bg-slate-950 p-2 shadow-2xl">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="https://digitalageexpo.com/files/listing_pages/817601-exhibitor.jpg"
+              src="https://apps.digitalageexpo.com/files/listing_pages/817601-exhibitor.jpg"
               alt="Virtual Stand Feature Showcase"
               className="w-full h-auto rounded-xl object-cover hover:scale-105 transition-transform duration-500"
             />
