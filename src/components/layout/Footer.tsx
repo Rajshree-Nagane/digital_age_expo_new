@@ -117,14 +117,19 @@ export async function Footer() {
               className="group inline-flex items-center"
               aria-label={domain.name}
             >
-              <div className="relative rounded-xl border border-white/10 bg-white/[0.03] px-5 py-3 transition-all duration-300 group-hover:border-fuchsia-500/30 group-hover:bg-white/[0.06]">
+              <div className="relative rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-4 transition-all duration-300 group-hover:border-fuchsia-500/30 group-hover:bg-white/[0.06]">
+                {/*
+                  width/height were 220x55 (4:1) but digitalageexpo_logo.png is 2172x724
+                  (3:1), so Next reserved a box of the wrong shape. 576x192 is the same
+                  3:1 ratio at ~3x the largest rendered width.
+                */}
                 <Image
                   src="/images/digitalageexpo_logo.png"
                   alt={domain.name}
-                  width={220}
-                  height={55}
+                  width={576}
+                  height={192}
                   priority
-                  className="h-auto max-h-12 w-auto object-contain"
+                  className="h-auto max-h-16 w-auto object-contain sm:max-h-20"
                 />
               </div>
             </Link>

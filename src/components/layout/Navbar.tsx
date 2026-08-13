@@ -371,7 +371,9 @@ export function Navbar({
       {/* =====================================================
           MAIN NAVBAR
       ===================================================== */}
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
+      {/* Bar height grows with the logo (was h-16 / 64px) so the mark keeps ~8-16px of
+          breathing room above and below rather than touching the bar edges. */}
+      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
 
         {/* =================================================
             LOGO
@@ -381,13 +383,19 @@ export function Navbar({
           className="group mr-2 flex shrink-0 items-center"
           aria-label={domainName}
         >
+          {/*
+            width/height are the ASPECT RATIO hint Next.js uses to reserve layout space —
+            they were 180x42 (4.29:1) while digitalageexpo_logo.png is actually 2172x724
+            (3:1), so the reserved box was the wrong shape and the row shifted once the
+            image decoded. 576x192 is the same 3:1 and ~3x the largest rendered width.
+          */}
           <Image
             src="/images/digitalageexpo_logo.png"
             alt={domainName}
-            width={180}
-            height={42}
+            width={576}
+            height={192}
             priority
-            className="h-10 w-auto brightness-110 transition-transform duration-300 group-hover:scale-105 lg:h-10 xl:h-11"
+            className="h-12 w-auto brightness-110 transition-transform duration-300 group-hover:scale-105 sm:h-14 xl:h-16"
           />
         </Link>
 
@@ -529,12 +537,13 @@ export function Navbar({
                   setDrawerOpen(false)
                 }
               >
+                {/* logo.png is 600x141 (4.255:1) — declared at its intrinsic size. */}
                 <Image
                   src="/images/logo.png"
                   alt={domainName}
-                  width={150}
-                  height={35}
-                  className="h-8 w-auto brightness-110"
+                  width={600}
+                  height={141}
+                  className="h-11 w-auto brightness-110"
                 />
               </Link>
 
