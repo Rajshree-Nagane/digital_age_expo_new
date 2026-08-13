@@ -119,7 +119,7 @@ export async function Footer() {
             >
               <div className="relative rounded-xl border border-white/10 bg-white/[0.03] px-5 py-3 transition-all duration-300 group-hover:border-fuchsia-500/30 group-hover:bg-white/[0.06]">
                 <Image
-                  src="/images/logo-footer.jpg"
+                  src="/images/digitalageexpo_logo.png"
                   alt={domain.name}
                   width={220}
                   height={55}

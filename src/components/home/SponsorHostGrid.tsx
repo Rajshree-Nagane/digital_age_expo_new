@@ -11,19 +11,19 @@ const DEFAULT_ITEMS: Item[] = [
   {
     id: 1,
     section_title: "Lead Sponsor & Tech Partner",
-    opportunity_images: "https://digitalageexpo.com/files/listing_pages/817601-visualytes.png",
+    opportunity_images: "/images/visualytes.png",
     additional_info: "https://www.visualytes.com",
   },
   {
     id: 2,
     section_title: "Powered by",
-    opportunity_images: "https://digitalageexpo.com/files/listing_pages/817601-tillu_white.png",
+    opportunity_images: "/images/tillu_white.png",
     additional_info: "https://tillu.co.uk",
   },
   {
     id: 3,
     section_title: "Organised By",
-    opportunity_images: "https://digitalageexpo.com/files/listing_pages/818073-209_alternate_logo.png",
+    opportunity_images: "/images/b2bgrowthhub.png",
     additional_info: "https://b2bgrowthhub.com",
   },
 ];

@@ -382,7 +382,7 @@ export function Navbar({
           aria-label={domainName}
         >
           <Image
-            src="/images/logo.png"
+            src="/images/digitalageexpo_logo.png"
             alt={domainName}
             width={180}
             height={42}
