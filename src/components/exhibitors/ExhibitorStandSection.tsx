@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { staticAssetUrl } from "@/lib/assets";
 
 export default function ExhibitorStandSection() {
   const [firstName, setFirstName] = useState("");
@@ -57,7 +58,7 @@ export default function ExhibitorStandSection() {
             </div>
             <div className="rounded-2xl overflow-hidden shadow-2xl border border-white/10">
               <Image
-                src="https://digitalageexpo.com/files/listing_pages/817601-exhibitor.jpg"
+                src={staticAssetUrl("https://digitalageexpo.com/files/listing_pages/817601-exhibitor.jpg")}
                 alt="Exhibitor Stand"
                 width={800}
                 height={500}
@@ -87,7 +88,7 @@ export default function ExhibitorStandSection() {
             </div>
             <div className="rounded-2xl overflow-hidden shadow-2xl border border-white/10">
               <Image
-                src="https://digitalageexpo.com/files/listing_pages/817601-exhibitor_2.jpg"
+                src={staticAssetUrl("https://digitalageexpo.com/files/listing_pages/817601-exhibitor_2.jpg")}
                 alt="Virtual Stand Works"
                 width={800}
                 height={500}
@@ -109,7 +110,7 @@ export default function ExhibitorStandSection() {
             </div>
             <div className="rounded-2xl overflow-hidden shadow-2xl border border-white/10">
               <Image
-                src="https://digitalageexpo.com/files/listing_pages/818073-exhibition.png"
+                src={staticAssetUrl("https://digitalageexpo.com/files/listing_pages/818073-exhibition.png")}
                 alt="Exhibition Benefits"
                 width={800}
                 height={500}

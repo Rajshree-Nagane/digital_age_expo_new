@@ -1,4 +1,5 @@
 import { CountdownTimer } from "@/components/home/CountdownTimer";
+import { staticAssetUrl } from "@/lib/assets";
 
 interface Props {
   title: string;
@@ -12,7 +13,7 @@ export function TicketUrgency({ title, subtext, eventName, targetDate }: Props) 
     <section
       className="relative overflow-hidden bg-cover bg-center bg-no-repeat px-6 py-20 text-center text-white border-y border-white/10"
       style={{
-        backgroundImage: `url('https://digitalageexpo.com/images/croped_hurry.jpg')`,
+        backgroundImage: `url('${staticAssetUrl("https://digitalageexpo.com/images/croped_hurry.jpg")}')`,
       }}
     >
       {/* Subtle backdrop overlay for clear text contrast over the image */}

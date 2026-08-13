@@ -1,6 +1,7 @@
 import { getDomain } from "@/lib/services/domain";
 import { getListingFaqs } from "@/lib/services/faq";
 import { FaqAccordionList } from "@/components/faq/FaqAccordionList";
+import { staticAssetUrl } from "@/lib/assets";
 
 export const metadata = {
   title: "Frequently Asked Questions | Digital Age Expo",
@@ -22,7 +23,7 @@ export default async function FrequentlyAskedQuestionsPage() {
       <div
         className="relative w-full bg-cover bg-center"
         style={{
-          backgroundImage: "url('https://digitalageexpo.com/files/listing_pages/817601-exibitor.png')",
+          backgroundImage: `url('${staticAssetUrl("https://digitalageexpo.com/files/listing_pages/817601-exibitor.png")}')`,
           height: "30rem",
         }}
       >

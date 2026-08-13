@@ -3,6 +3,7 @@ import { getEventById } from "@/lib/services/events";
 import { getActiveEventTickets } from "@/lib/services/eventTickets";
 import { TicketUrgency } from "@/components/home/TicketUrgency";
 import { BuyTicketsClient } from "@/components/tickets/BuyTicketsClient";
+import { staticAssetUrl } from "@/lib/assets";
 
 export const metadata = {
   title: "Buy Tickets | Digital Age Expo",
@@ -21,7 +22,7 @@ export default async function BuyTicketsPage() {
         className="relative flex items-end"
         style={{
           height: "420px",
-          backgroundImage: "url(https://digitalageexpo.com/files/buy_ticket_banner1.jpg)",
+          backgroundImage: `url(${staticAssetUrl("https://digitalageexpo.com/files/buy_ticket_banner1.jpg")})`,
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat",
           backgroundPosition: "center center",

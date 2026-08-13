@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import axios, { isAxiosError } from "axios";
 import { Store, User, Globe, Video, FileText, CheckCircle2, AlertCircle, Sparkles, Upload } from "lucide-react";
+import { staticAssetUrl } from "@/lib/assets";
 
 const INPUT_CLASS =
   "w-full rounded-xl border border-white/15 bg-slate-900/90 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-fuchsia-500 focus:outline-none focus:ring-1 focus:ring-fuchsia-500 transition-all";
@@ -30,13 +31,13 @@ const EXHIBITION_ZONES = [
 ];
 
 const STAND_OPTIONS = [
-  { id: "2808", img: "https://digitalageexpo.com/files/lobby/child/event_327.jpg", title: "Standard Booth A" },
-  { id: "2757", img: "https://digitalageexpo.com/files/lobby/child/event_1495.png", title: "Premium Booth B" },
-  { id: "2735", img: "https://digitalageexpo.com/files/lobby/child/event_1473.png", title: "Corner Showcase C" },
-  { id: "2758", img: "https://digitalageexpo.com/files/lobby/child/event_1496.png", title: "Executive Suite D" },
-  { id: "2759", img: "https://digitalageexpo.com/files/lobby/child/event_1497.png", title: "Virtual Kiosk E" },
-  { id: "2760", img: "https://digitalageexpo.com/files/lobby/child/event_1498.png", title: "Platinum Pavilion F" },
-  { id: "2812", img: "https://digitalageexpo.com/files/lobby/child/event_708.png", title: "Innovation Stand G" },
+  { id: "2808", img: staticAssetUrl("https://digitalageexpo.com/files/lobby/child/event_327.jpg"), title: "Standard Booth A" },
+  { id: "2757", img: staticAssetUrl("https://digitalageexpo.com/files/lobby/child/event_1495.png"), title: "Premium Booth B" },
+  { id: "2735", img: staticAssetUrl("https://digitalageexpo.com/files/lobby/child/event_1473.png"), title: "Corner Showcase C" },
+  { id: "2758", img: staticAssetUrl("https://digitalageexpo.com/files/lobby/child/event_1496.png"), title: "Executive Suite D" },
+  { id: "2759", img: staticAssetUrl("https://digitalageexpo.com/files/lobby/child/event_1497.png"), title: "Virtual Kiosk E" },
+  { id: "2760", img: staticAssetUrl("https://digitalageexpo.com/files/lobby/child/event_1498.png"), title: "Platinum Pavilion F" },
+  { id: "2812", img: staticAssetUrl("https://digitalageexpo.com/files/lobby/child/event_708.png"), title: "Innovation Stand G" },
 ];
 
 export function ExhibitorInformationForm() {

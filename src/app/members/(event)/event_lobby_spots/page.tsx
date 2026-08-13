@@ -9,6 +9,7 @@ import { getChildLobbyById } from "@/lib/services/eventLobbyChild";
 import { getSpots } from "@/lib/services/eventLobbySpots";
 import { LobbySpotsCanvas } from "@/components/dashboard/LobbySpotsCanvas";
 import { LobbySubNav } from "@/components/dashboard/LobbySubNav";
+import { staticAssetUrl } from "@/lib/assets";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Lobby Spots | Event Management" };
@@ -93,7 +94,7 @@ export default async function EventLobbySpotsPage({
 const backgroundImage = child?.image ?? lobby.image ?? null;
 
 const backgroundVideo =
-  "https://digitalageexpo.com/files/lobby/event_45.mp4?revision=aa1e7094c326207fe9f239adf18b25c0";  const spots = await getSpots(context, { eventLayoutId: lobby.id, childId: child?.id ?? null });
+  staticAssetUrl("https://digitalageexpo.com/files/lobby/event_45.mp4?revision=aa1e7094c326207fe9f239adf18b25c0");  const spots = await getSpots(context, { eventLayoutId: lobby.id, childId: child?.id ?? null });
 
   return (
     <div className="section-transition space-y-6 animate-fade-in">

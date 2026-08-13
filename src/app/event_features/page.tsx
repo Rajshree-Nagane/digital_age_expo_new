@@ -4,6 +4,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
+import { staticAssetUrl } from "@/lib/assets";
 
 export const metadata = {
   title: "Event Features | Digital Age Expo",
@@ -24,7 +25,7 @@ export default function EventFeaturesPage() {
     {
       title: "Welcome To Our Virtual World",
       badge: "Event Lobby",
-      image: "https://apps.digitalageexpo.com/images/event_lobby.png",
+      image: staticAssetUrl("https://apps.digitalageexpo.com/images/event_lobby.png"),
       description:
         "The central hub where thousands of attendees arrive, navigate to key zones, and discover event highlights.",
       points: [
@@ -41,7 +42,7 @@ export default function EventFeaturesPage() {
     {
       title: "Visit Our Auditorium",
       badge: "Main Stage & Keynotes",
-      image: "https://apps.digitalageexpo.com/images/speaker_hall.png",
+      image: staticAssetUrl("https://apps.digitalageexpo.com/images/speaker_hall.png"),
       description:
         "Listen to world-renowned speakers covering lead generation, social media, AI strategies, customer acquisition, and enterprise scaling.",
       points: [
@@ -57,7 +58,7 @@ export default function EventFeaturesPage() {
     {
       title: "Your Custom Exhibition Stand",
       badge: "Exhibitor Booth",
-      image: "https://apps.digitalageexpo.com/images/exhibitor_stand.png",
+      image: staticAssetUrl("https://apps.digitalageexpo.com/images/exhibitor_stand.png"),
       description:
         "Your dedicated 24/7 digital booth engineered for lead conversion, collateral downloads, and live buyer conversations.",
       points: [
@@ -74,7 +75,7 @@ export default function EventFeaturesPage() {
     {
       title: "Visit Our Photo Booth",
       badge: "Social Media & Branding",
-      image: "https://apps.digitalageexpo.com/images/photobooth.png",
+      image: staticAssetUrl("https://apps.digitalageexpo.com/images/photobooth.png"),
       description:
         "Increase brand shareability across social networks with custom co-branded digital event photo memories.",
       points: [
@@ -88,7 +89,7 @@ export default function EventFeaturesPage() {
     {
       title: "Visit Our Networking Lounge",
       badge: "Connections & Lounge",
-      image: "https://apps.digitalageexpo.com/images/networking_lounge.png",
+      image: staticAssetUrl("https://apps.digitalageexpo.com/images/networking_lounge.png"),
       description:
         "Connect in real-time with fellow entrepreneurs, investors, suppliers, and prospective partners.",
       points: [
@@ -108,7 +109,7 @@ export default function EventFeaturesPage() {
       <section
         className="relative overflow-hidden bg-cover bg-center bg-no-repeat px-6 py-20 sm:py-28 text-center"
         style={{
-          backgroundImage: `linear-gradient(to bottom, rgba(var(--color-slate-900-rgb), 0.9), rgba(var(--color-violet-900-rgb), 0.85), rgba(var(--color-slate-900-rgb), 0.95)), url('https://digitalageexpo.com/files/listing_pages/818073-dae_index_top_banner.jpg')`,
+          backgroundImage: `linear-gradient(to bottom, rgba(var(--color-slate-900-rgb), 0.9), rgba(var(--color-violet-900-rgb), 0.85), rgba(var(--color-slate-900-rgb), 0.95)), url('${staticAssetUrl("https://digitalageexpo.com/files/listing_pages/818073-dae_index_top_banner.jpg")}')`,
         }}
       >
         <div className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 h-96 w-96 rounded-full bg-fuchsia-600/30 blur-3xl" />

@@ -7,6 +7,7 @@ import { WhySponsorSection } from "@/components/sponsors/WhySponsorSection";
 import { SponsorRegistrationForm } from "@/components/sponsors/SponsorRegistrationForm";
 import { Sparkles, Ticket, Play, Store } from "lucide-react";
 import Link from "next/link";
+import { staticAssetUrl } from "@/lib/assets";
 
 export const metadata = {
   title: "Our Sponsors & Registration | Digital Age Expo",
@@ -34,7 +35,7 @@ export default async function OurSponsorPage() {
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40"
           style={{
-            backgroundImage: "url('https://digitalageexpo.com/files/listing_pages/818073-dae_index_top_banner.jpg')",
+            backgroundImage: `url('${staticAssetUrl("https://digitalageexpo.com/files/listing_pages/818073-dae_index_top_banner.jpg")}')`,
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-purple-950/80 via-slate-950/80 to-slate-950" />

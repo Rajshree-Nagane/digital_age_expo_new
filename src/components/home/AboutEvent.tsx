@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { assetUrl } from "@/lib/assets";
+import { assetUrl, staticAssetUrl } from "@/lib/assets";
 import { formatDayRange, formatMonthDayYear } from "@/lib/format";
 
 interface Props {
@@ -20,7 +20,7 @@ export function AboutEvent({
   dateEnd,
 }: Props) {
   const bgImage =
-    assetUrl(backgroundImage) || "https://digitalageexpo.com/files/listing_pages/817601-banner1.jpg";
+    assetUrl(backgroundImage) || staticAssetUrl("https://digitalageexpo.com/files/listing_pages/817601-banner1.jpg");
 
   const title = sectionTitle || "About The Event";
   const defaultDesc =

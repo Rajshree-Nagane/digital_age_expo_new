@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import type { MarketingToolsData } from "@/lib/services/eventMarketingTools";
+import { assetUrl } from "@/lib/assets";
 
 interface MarketingToolsManagerProps {
   data: MarketingToolsData;
@@ -162,7 +163,7 @@ export function MarketingToolsManager({ data: initialData, canManage, eventId }:
         <div className="mt-6 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
           <div className="md:col-span-4">
             <img
-              src={data.cover_image || defaultImage}
+              src={assetUrl(data.cover_image) || defaultImage}
               alt="Marketing Cover"
               className="h-48 w-full rounded-xl border border-white/10 object-cover shadow-sm"
             />
@@ -236,7 +237,7 @@ export function MarketingToolsManager({ data: initialData, canManage, eventId }:
                   <h4 className="text-xs font-black uppercase text-white">{item.title}</h4>
                   <div className="flex items-center justify-center rounded-xl border border-white/10 bg-white/5 p-4 min-h-[160px] max-h-[220px] overflow-hidden">
                     <img
-                      src={imgSrc}
+                      src={assetUrl(imgSrc)}
                       alt={item.title}
                       className="max-h-[180px] w-auto object-contain rounded-lg"
                     />

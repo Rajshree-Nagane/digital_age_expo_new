@@ -22,6 +22,7 @@ import type {
   TodoListingOption,
 } from "@/lib/services/eventTodoList";
 import { COUNTRIES } from "@/lib/constants/countries";
+import { assetUrl } from "@/lib/assets";
 
 const FIELD_CLASS =
   "w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-brand-pink focus:outline-none transition-colors backdrop-blur-md";
@@ -144,7 +145,7 @@ function ImageUploadField({
         {value ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={value}
+            src={assetUrl(value)}
             alt={`${label} preview`}
             className={previewClassName ?? "h-16 w-24 rounded-xl border border-white/10 bg-white/5 object-contain p-1"}
           />

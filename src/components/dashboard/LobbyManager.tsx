@@ -24,6 +24,7 @@ import {
 import { eventLobbySchema, LOBBY_STATUSES, type EventLobbyInput } from "@/lib/validations/eventLobby";
 import type { LobbyRow, LobbyTemplateOption } from "@/lib/services/eventLobby";
 import { TablePagination } from "@/components/dashboard/TablePagination";
+import { assetUrl } from "@/lib/assets";
 
 const PAGE_SIZE = 15;
 
@@ -580,7 +581,7 @@ function ImportLobbyModal({
                     {t.image ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={t.image}
+                        src={assetUrl(t.image)}
                         alt={t.title}
                         className="h-12 w-16 rounded-xl border border-white/10 object-cover"
                       />
@@ -806,7 +807,7 @@ export function LobbyManager({
                       {lobby.image ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={lobby.image}
+                          src={assetUrl(lobby.image)}
                           alt={lobby.title}
                           className="h-9 w-14 rounded-lg border border-white/10 object-cover"
                         />

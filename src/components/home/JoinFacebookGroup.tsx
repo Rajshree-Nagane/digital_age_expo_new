@@ -1,4 +1,4 @@
-import { assetUrl } from "@/lib/assets";
+import { assetUrl, staticAssetUrl } from "@/lib/assets";
 
 interface Props {
   sectionTitle?: string | null;
@@ -29,14 +29,14 @@ export function JoinFacebookGroup({
   const link = buttonLink || "https://www.facebook.com/groups/digitalageexpo";
   const btnTxt = buttonText || "Click here to Join Our Facebook Group Now!";
 
-  const img1 = assetUrl(primaryImage) || "https://digitalageexpo.com/files/listing_pages/817601-fb_grp_1.png";
-  const img2 = assetUrl(secondaryImage) || "https://digitalageexpo.com/files/listing_pages/817601-fb_grp_2.png";
+  const img1 = assetUrl(primaryImage) || staticAssetUrl("https://digitalageexpo.com/files/listing_pages/817601-fb_grp_1.png");
+  const img2 = assetUrl(secondaryImage) || staticAssetUrl("https://digitalageexpo.com/files/listing_pages/817601-fb_grp_2.png");
 
   return (
     <section
       className="relative overflow-hidden bg-cover bg-center bg-no-repeat px-6 py-20 text-white"
       style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(var(--color-slate-900-rgb), 0.92), rgba(var(--color-violet-900-rgb), 0.90)), url('https://digitalageexpo.com/files/listing_pages/818073-dae_index_top_banner.jpg')`,
+        backgroundImage: `linear-gradient(to bottom, rgba(var(--color-slate-900-rgb), 0.92), rgba(var(--color-violet-900-rgb), 0.90)), url('${staticAssetUrl("https://digitalageexpo.com/files/listing_pages/818073-dae_index_top_banner.jpg")}')`,
       }}
     >
       <div className="relative z-10 mx-auto max-w-5xl">

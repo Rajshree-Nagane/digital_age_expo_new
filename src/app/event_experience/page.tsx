@@ -9,6 +9,7 @@ import {
   ArrowRight, ExternalLink, ShieldCheck, Sparkles, Clock, 
   Building, Award, HelpCircle, Ticket, Globe, Layers, MessageSquare, Briefcase, Play 
 } from "lucide-react";
+import { staticAssetUrl } from "@/lib/assets";
 
 const hubMenus = [
   { 
@@ -99,7 +100,7 @@ export default function EventExperiencePage() {
       <div 
         className="relative w-full bg-cover bg-center py-24 sm:py-36 px-4"
         style={{
-          backgroundImage: "url('https://digitalageexpo.com/files/listing_pages/818073-dae_index_top_banner.jpg')"
+          backgroundImage: `url('${staticAssetUrl("https://digitalageexpo.com/files/listing_pages/818073-dae_index_top_banner.jpg")}')`
         }}
       >
         <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px]" />
@@ -260,7 +261,7 @@ export default function EventExperiencePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 items-stretch min-h-[360px]">
           <div 
             className="bg-cover bg-center min-h-[300px]"
-            style={{ backgroundImage: "url('https://tradeshowslocal.com/files/listing_pages/817601-cta_img.jpg')" }}
+            style={{ backgroundImage: `url('${staticAssetUrl("https://tradeshowslocal.com/files/listing_pages/817601-cta_img.jpg")}')` }}
           />
           <div className="p-8 sm:p-16 flex flex-col justify-center space-y-4 bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950">
             <span className="text-pink-400 font-bold uppercase tracking-widest text-xs">Get Experience</span>
@@ -402,7 +403,7 @@ export default function EventExperiencePage() {
       {/* Book Your Seat Footer CTA */}
       <section 
         className="relative py-28 px-4 text-center bg-cover bg-center"
-        style={{ backgroundImage: "url('https://digitalageexpo.com/files/listing_pages/817601-book_seat_img.jpg')" }}
+        style={{ backgroundImage: `url('${staticAssetUrl("https://digitalageexpo.com/files/listing_pages/817601-book_seat_img.jpg")}')` }}
       >
         <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[2px]" />
         <div className="container mx-auto max-w-3xl relative z-10 space-y-6">

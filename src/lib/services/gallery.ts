@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { ASSETS_BASE_URL } from "@/lib/site-config";
+import { assetUrl } from "@/lib/assets";
 
 export interface GalleryItem {
   id: number;
@@ -29,7 +29,7 @@ export async function getEventGallery(eventId: number): Promise<GalleryItem[]> {
     id: row.id,
     title: row.title,
     description: row.description,
-    imageUrl: row.image ? `${ASSETS_BASE_URL}/files/events/organiser_image/${row.image}` : null,
+    imageUrl: assetUrl(row.image ? `files/events/organiser_image/${row.image}` : null) ?? null,
     youtubeLink: row.youtube_link,
     isVideo: !!row.youtube_link || row.type === "video",
   }));

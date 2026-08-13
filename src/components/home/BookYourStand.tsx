@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { assetUrl } from "@/lib/assets";
+import { assetUrl, staticAssetUrl } from "@/lib/assets";
 
 interface Props {
   sectionTitle?: string | null;
@@ -14,7 +14,7 @@ export function BookYourStand({ sectionTitle, sectionDescription, image }: Props
 
   const imgMain =
     assetUrl(image) ||
-    "https://digitalageexpo.com/files/listing_pages/817601-exhibitor.jpg";
+    staticAssetUrl("/images/exhibitor.jpg");
 
   return (
     <section className="relative overflow-hidden bg-zinc-950 px-6 py-20 text-white">
@@ -78,7 +78,7 @@ export function BookYourStand({ sectionTitle, sectionDescription, image }: Props
             <div className="overflow-hidden rounded-3xl shadow-2xl border border-white/10 bg-white/5 p-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="https://digitalageexpo.com/files/listing_pages/817601-exhibitor_2.jpg"
+                src={staticAssetUrl("/images/exhibitor_2.jpg")}
                 alt="Virtual Exhibition Stand Showcase"
                 className="w-full h-auto rounded-2xl object-cover hover:scale-[1.02] transition-transform duration-500"
               />

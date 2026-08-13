@@ -14,6 +14,7 @@ import {
 } from "@/lib/validations/leadershipBoard";
 import type { LeadershipBoardRow } from "@/lib/services/leadershipBoard";
 import { TablePagination } from "@/components/dashboard/TablePagination";
+import { assetUrl } from "@/lib/assets";
 
 const PAGE_SIZE = 20;
 
@@ -430,7 +431,7 @@ export function LeadershipBoardManager({ entries }: { entries: LeadershipBoardRo
                         <div className="h-10 w-10 shrink-0 rounded-full bg-white/5 border border-white/10 overflow-hidden">
                           {entry.image ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={entry.image} alt="" className="h-full w-full object-cover" />
+                            <img src={assetUrl(entry.image)} alt="" className="h-full w-full object-cover" />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center font-black text-[10px] text-brand-purple">
                               {entry.firstName?.[0]}{entry.lastName?.[0]}

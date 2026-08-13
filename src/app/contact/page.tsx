@@ -3,6 +3,7 @@ import { getEventById } from "@/lib/services/events";
 import { ContactForm } from "@/components/contact/ContactForm";
 import Image from "next/image";
 import { MapPin, Phone, Mail, Clock, Calendar } from "lucide-react";
+import { staticAssetUrl } from "@/lib/assets";
 
 export const metadata = {
   title: "Contact Us - Digital Age Expo 2026",
@@ -19,7 +20,7 @@ export default async function ContactPage() {
         {/* Background Image Wrapper */}
         <div className="absolute inset-0 z-0">
           <Image
-            src="https://digitalageexpo.com/files/listing_pages/817601-CONTACT_IMAGE.jpg"
+            src={staticAssetUrl("https://digitalageexpo.com/files/listing_pages/817601-CONTACT_IMAGE.jpg")}
             alt="Contact Us Cover"
             fill
             priority

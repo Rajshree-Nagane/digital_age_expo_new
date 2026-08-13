@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { staticAssetUrl } from "@/lib/assets";
 
 interface Props {
   title?: string;
@@ -14,10 +15,10 @@ export function GetFreeTicket({ title, description }: Props) {
         muted
         loop
         playsInline
-        poster="https://digitalageexpo.com/images/maxresdefault.jpg"
+        poster={staticAssetUrl("https://digitalageexpo.com/images/maxresdefault.jpg")}
         className="absolute inset-0 h-full w-full object-cover opacity-35"
       >
-        <source src="https://digitalageexpo.com/images/get_ticket.mp4" type="video/mp4" />
+        <source src={staticAssetUrl("https://digitalageexpo.com/images/get_ticket.mp4")} type="video/mp4" />
       </video>
 
       {/* Dark Gradient Overlay */}

@@ -30,6 +30,7 @@ import {
 } from "@/lib/validations/eventLobbyChild";
 import type { ChildLobbyRow } from "@/lib/services/eventLobbyChild";
 import { TablePagination } from "@/components/dashboard/TablePagination";
+import { assetUrl } from "@/lib/assets";
 
 const PAGE_SIZE = 15;
 
@@ -577,7 +578,7 @@ export function ChildLobbyManager({
                       {row.image ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={row.image}
+                          src={assetUrl(row.image)}
                           alt={row.title}
                           className="h-9 w-14 rounded-lg border border-white/10 object-cover"
                         />

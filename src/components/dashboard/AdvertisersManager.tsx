@@ -33,6 +33,7 @@ import {
 } from "@/lib/validations/eventAdvertiser";
 import type { AdvertiserRow, AdvertiserStats } from "@/lib/services/eventAdvertiser";
 import { TablePagination } from "@/components/dashboard/TablePagination";
+import { assetUrl } from "@/lib/assets";
 
 const PAGE_SIZE = 20;
 
@@ -1038,7 +1039,7 @@ export function AdvertisersManager({
                             className="group block relative h-10 w-16 overflow-hidden rounded border border-white/10 hover:border-white/20 transition"
                           >
                             <img
-                              src={advertiser.image}
+                              src={assetUrl(advertiser.image)}
                               alt="Advert"
                               className="h-full w-full object-cover transition duration-300 group-hover:scale-110"
                             />

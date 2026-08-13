@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CountdownTimer } from "@/components/home/CountdownTimer";
 import { Hero3DBackground } from "@/components/home/Hero3DBackground";
 import { formatDateLocation } from "@/lib/format";
+import { staticAssetUrl } from "@/lib/assets";
 
 interface Props {
   title: string;
@@ -16,7 +17,7 @@ export function HeroSection({ title, label, dateStart, dateEnd, venue }: Props) 
     <section
       className="relative overflow-hidden bg-cover bg-center bg-no-repeat px-6 py-28 text-center text-white sm:py-36"
       style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(var(--color-surface-1-rgb), 0.75), rgba(var(--color-surface-1-rgb), 0.45) 50%, var(--color-surface-1)), url('https://digitalageexpo.com/files/listing_pages/818073-dae_index_top_banner.jpg')`,
+        backgroundImage: `linear-gradient(to bottom, rgba(var(--color-surface-1-rgb), 0.75), rgba(var(--color-surface-1-rgb), 0.45) 50%, var(--color-surface-1)), url('${staticAssetUrl("https://digitalageexpo.com/files/listing_pages/818073-dae_index_top_banner.jpg")}')`,
       }}
     >
       {/* Decorative ambient gradient glows */}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { assetUrl } from "@/lib/assets";
+import { assetUrl, staticAssetUrl } from "@/lib/assets";
 
 interface Props {
   videoUrl?: string | null;
@@ -8,7 +8,7 @@ interface Props {
 }
 
 export function ExploreEvent({ videoUrl, primaryLabel, secondaryLabel }: Props) {
-  const src = assetUrl(videoUrl) || "https://findusonweb.com/files/listing_pages/817601-05_INTRO_OK-1.mp4";
+  const src = assetUrl(videoUrl) || staticAssetUrl("https://findusonweb.com/files/listing_pages/817601-05_INTRO_OK-1.mp4");
 
   return (
     <section className="relative overflow-hidden bg-surface-1 text-white">

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { ASSETS_BASE_URL } from "@/lib/site-config";
+import { assetUrl } from "@/lib/assets";
 
 /**
  * Legacy `generated_pdf`/`thumbnail` columns store full server filesystem paths
@@ -14,7 +14,7 @@ function toPublicFileUrl(path: string | null | undefined): string | null {
   const idx = path.indexOf(marker);
   if (idx === -1) return null;
   const suffix = path.slice(idx + marker.length);
-  return `${ASSETS_BASE_URL}/files${suffix}`;
+  return assetUrl(`files${suffix}`) ?? null;
 }
 
 export interface MagazinePublication {

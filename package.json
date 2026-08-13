@@ -7,7 +7,10 @@
     "build": "next build",
     "postinstall": "prisma generate",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "images:audit": "tsx scripts/download-external-images.ts audit",
+    "images:download": "tsx scripts/download-external-images.ts download",
+    "images:verify": "tsx scripts/download-external-images.ts verify"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -38,6 +41,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "tailwindcss": "^4",
+    "tsx": "^4.23.12",
     "typescript": "^5"
   }
 }

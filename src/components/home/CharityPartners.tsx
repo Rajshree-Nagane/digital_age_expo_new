@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { assetUrl } from "@/lib/assets";
+import { assetUrl, staticAssetUrl } from "@/lib/assets";
 
 interface Partner {
   id: number;
@@ -10,7 +10,7 @@ interface Partner {
 const DEFAULT_PARTNER: Partner = {
   id: 1,
   charity_name: "Wessex Cancer Trust",
-  logo: "https://digitalageexpo.com/files/listing_pages/charity_1634042913-wessex.PNG",
+  logo: staticAssetUrl("/images/charity.png"),
 };
 
 export function CharityPartners({ partners }: { partners?: Partner[] }) {

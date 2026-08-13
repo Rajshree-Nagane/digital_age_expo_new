@@ -5,6 +5,7 @@ import { formatDateLocation } from "@/lib/format";
 import { ExhibitorRegistrationForm } from "@/components/exhibitors/ExhibitorRegistrationForm";
 import { ScrollToSection } from "@/components/exhibitors/ScrollToSection";
 import { Phone, Mail, Sparkles, TrendingUp, Megaphone, Users, Award, CheckCircle2 } from "lucide-react";
+import { assetUrl, staticAssetUrl } from "@/lib/assets";
 
 export const metadata = {
   title: "Exhibitor Registration | Digital Age Expo",
@@ -90,7 +91,7 @@ export default async function ExhibitorRegistrationPage({ searchParams }: Props)
       <section
         className="relative overflow-hidden bg-cover bg-center bg-no-repeat px-6 py-20 sm:py-28 text-center"
         style={{
-          backgroundImage: `linear-gradient(to bottom, rgba(var(--color-slate-900-rgb), 0.9), rgba(var(--color-violet-900-rgb), 0.85), rgba(var(--color-slate-900-rgb), 0.95)), url('https://digitalageexpo.com/files/listing_pages/818073-dae_index_top_banner.jpg')`,
+          backgroundImage: `linear-gradient(to bottom, rgba(var(--color-slate-900-rgb), 0.9), rgba(var(--color-violet-900-rgb), 0.85), rgba(var(--color-slate-900-rgb), 0.95)), url('${staticAssetUrl("https://digitalageexpo.com/files/listing_pages/818073-dae_index_top_banner.jpg")}')`,
         }}
       >
         <div className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 h-96 w-96 rounded-full bg-fuchsia-600/30 blur-3xl" />
@@ -124,7 +125,10 @@ export default async function ExhibitorRegistrationPage({ searchParams }: Props)
           <div
             className="min-h-[280px] lg:min-h-[400px] bg-cover bg-center relative"
             style={{
-              backgroundImage: `url('${packageIncludes[0]?.image || "https://findusonweb.com/files/listing_pages/817601-27972070586_73eb8ef975_o (1).jpg"}')`,
+              backgroundImage: `url('${
+                assetUrl(packageIncludes[0]?.image) ||
+                staticAssetUrl("https://findusonweb.com/files/listing_pages/817601-27972070586_73eb8ef975_o (1).jpg")
+              }')`,
             }}
           >
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent lg:hidden" />
@@ -197,7 +201,8 @@ export default async function ExhibitorRegistrationPage({ searchParams }: Props)
                   className="group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/90 p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-fuchsia-500/50 hover:shadow-2xl hover:shadow-fuchsia-950/50 flex flex-col justify-between"
                   style={{
                     backgroundImage: `linear-gradient(to bottom, rgba(var(--color-slate-900-rgb), 0.85), rgba(var(--color-slate-900-rgb), 0.95)), url('${
-                      gain.image || "https://digitalageexpo.com/files/listing_pages/817601-backgr.jpg"
+                      assetUrl(gain.image) ||
+                      staticAssetUrl("https://digitalageexpo.com/files/listing_pages/817601-backgr.jpg")
                     }')`,
                     backgroundSize: "cover",
                     backgroundPosition: "bottom",

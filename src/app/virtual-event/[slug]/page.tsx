@@ -12,7 +12,7 @@ import {
   getExhibitorMenuExtras,
 } from "@/lib/services/publicLobby";
 import { getEventExhibitorDirectory } from "@/lib/services/exhibitors";
-import { lobbyAssetUrl, isLobbyVideoAsset } from "@/lib/assets";
+import { isLobbyVideoAsset, lobbyAssetUrl, staticAssetUrl } from "@/lib/assets";
 import { LobbyTopBar } from "@/components/virtual-event/LobbyTopBar";
 import { LobbyHotspots, type HotspotWithMenu } from "@/components/virtual-event/LobbyHotspots";
 import { LobbyFooterNav, type FooterItem } from "@/components/virtual-event/LobbyFooterNav";
@@ -126,7 +126,7 @@ export default async function VirtualEventLobbyPage({
     preload="auto"
   >
     <source
-      src="https://digitalageexpo.com/files/lobby/event_47.mp4?revision=4aa25b9fb8b4163cbe17606b34b74288"
+      src={staticAssetUrl("https://digitalageexpo.com/files/lobby/event_47.mp4?revision=4aa25b9fb8b4163cbe17606b34b74288")}
       type="video/mp4"
     />
   </video>

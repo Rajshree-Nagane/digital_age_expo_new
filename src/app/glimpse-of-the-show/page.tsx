@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Sparkles, CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
 import axios, { isAxiosError } from "axios";
+import { staticAssetUrl } from "@/lib/assets";
 
 export default function GlimpseOfTheShowPage() {
   const [formData, setFormData] = useState({
@@ -65,7 +66,7 @@ export default function GlimpseOfTheShowPage() {
         {/* Background Video */}
         <div className="absolute inset-0">
           <video
-            src="https://findusonweb.com/files/listing_pages/817601-05_INTRO_OK-1.mp4"
+            src={staticAssetUrl("https://findusonweb.com/files/listing_pages/817601-05_INTRO_OK-1.mp4")}
             autoPlay
             loop
             muted
@@ -202,17 +203,17 @@ export default function GlimpseOfTheShowPage() {
           {[
             {
               title: "Lead Sponsor & Tech Partner",
-              img: "https://digitalageexpo.com/files/listing_pages/817601-visualytes.png",
+              img: staticAssetUrl("https://digitalageexpo.com/files/listing_pages/817601-visualytes.png"),
               link: "www.visualytes.com",
             },
             {
               title: "Powered by",
-              img: "https://digitalageexpo.com/files/listing_pages/817601-tillu_white.png",
+              img: staticAssetUrl("https://digitalageexpo.com/files/listing_pages/817601-tillu_white.png"),
               link: "tillu.co.uk",
             },
             {
               title: "Organised By",
-              img: "https://digitalageexpo.com/files/listing_pages/818073-209_alternate_logo.png",
+              img: staticAssetUrl("https://digitalageexpo.com/files/listing_pages/818073-209_alternate_logo.png"),
               link: "b2bgrowthhub.com",
             },
           ].map((s, i) => (
@@ -249,19 +250,19 @@ export default function GlimpseOfTheShowPage() {
           {[
             {
               title: "Exhibition Lobby",
-              video: "https://findusonweb.com/files/listing_pages/Digital Age Expo Intro.mp4",
+              video: staticAssetUrl("https://findusonweb.com/files/listing_pages/Digital Age Expo Intro.mp4"),
             },
             {
               title: "Welcome area",
-              img: "https://findusonweb.com/files/listing_pages/817601-333.jpg",
+              img: staticAssetUrl("https://findusonweb.com/files/listing_pages/817601-333.jpg"),
             },
             {
               title: "Photo booth",
-              img: "https://findusonweb.com/files/listing_pages/817601-photob.jpg",
+              img: staticAssetUrl("https://findusonweb.com/files/listing_pages/817601-photob.jpg"),
             },
             {
               title: "Exhibition Hall",
-              img: "https://findusonweb.com/files/listing_pages/817601-newexhibi.png",
+              img: staticAssetUrl("https://findusonweb.com/files/listing_pages/817601-newexhibi.png"),
             },
           ].map((item, i) => (
             <div key={i} className="space-y-3 group">

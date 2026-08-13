@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Star } from 'lucide-react';
+import { assetUrl } from "@/lib/assets";
 
 export function Testimonials() {
   const defaultTestimonials = [
@@ -58,7 +59,7 @@ export function Testimonials() {
                 <div className="w-11 h-11 rounded-xl overflow-hidden border border-white/10 bg-surface-2 shrink-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
-                    src={test.avatar} 
+                    src={assetUrl(test.avatar)} 
                     alt={test.name} 
                     className="w-full h-full object-cover" 
                   />

@@ -30,6 +30,20 @@ export const DEFAULT_LISTING_ID = 810210;
  */
 export const ACTIVE_EVENT_SETTING_VARNAME = "cp_active_event_id";
 
+/**
+ * @deprecated NO LONGER USED FOR IMAGE RESOLUTION — and must not be reintroduced.
+ *
+ * Every uploaded asset is now mirrored into `public/images/external/**` and
+ * resolved by `assetUrl()` (see src/lib/asset-map.ts). Prefixing this base URL
+ * onto a stored filename is what made images depend on the legacy PHP host, and
+ * why they rendered on a local XAMPP checkout but broke on Vercel. It is also
+ * why a genuinely local path like `/images/visualytes.png` used to come out as
+ * `http://localhost/findusonweb/images/visualytes.png`.
+ *
+ * Kept only so any straggling import still compiles. Delete it once nothing
+ * references it, and remove NEXT_PUBLIC_ASSETS_BASE_URL from your Vercel
+ * project settings — it no longer has any effect on image URLs.
+ */
 export const ASSETS_BASE_URL =
   process.env.NEXT_PUBLIC_ASSETS_BASE_URL ?? "http://localhost/findusonweb";
 
