@@ -89,7 +89,7 @@ export default function EventFeaturesPage() {
     {
       title: "Visit Our Networking Lounge",
       badge: "Connections & Lounge",
-      image: staticAssetUrl("/images/event_zone.png"),
+      image: staticAssetUrl("/images/exhibitor_2.jpg"),
       description:
         "Connect in real-time with fellow entrepreneurs, investors, suppliers, and prospective partners.",
       points: [
