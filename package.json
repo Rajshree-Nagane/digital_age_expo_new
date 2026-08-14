@@ -12,7 +12,8 @@
     "images:download": "tsx scripts/download-external-images.ts download",
     "images:verify": "tsx scripts/download-external-images.ts verify",
     "db:ping": "tsx scripts/db-ping.ts",
-    "db:registration-fields": "tsx scripts/create-registration-fields-table.ts"
+    "db:registration-fields": "tsx scripts/create-registration-fields-table.ts",
+    "db:event-configurations": "tsx scripts/create-event-configurations-table.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
