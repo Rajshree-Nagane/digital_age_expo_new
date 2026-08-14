@@ -12,6 +12,10 @@ import type { LobbySpotRow } from "@/lib/services/eventLobbySpots";
 const FIELD_CLASS =
   "w-full rounded-md border border-indigo-950/20 bg-white px-3.5 py-2.5 text-sm text-indigo-950 placeholder:text-indigo-950/40 focus:border-fuchsia-500 focus:outline-none";
 
+// Files under /public are served from the site root, so a file at
+// "public/images/event_47.mp4" on disk is reachable in the browser at "/images/event_47.mp4".
+const DEFAULT_BACKGROUND_VIDEO = "/images/event_47.mp4";
+
 const TYPE_META: Record<(typeof LOBBY_SPOT_TYPES)[number], { icon: typeof Target; label: string; dot: string }> = {
   info: { icon: Target, label: "Info Spot", dot: "bg-purple-800" },
   video: { icon: Video, label: "Video Panel", dot: "bg-rose-600" },
@@ -21,12 +25,33 @@ const TYPE_META: Record<(typeof LOBBY_SPOT_TYPES)[number], { icon: typeof Target
 
 interface LobbySpotsCanvasProps {
   spots: LobbySpotRow[];
-  backgroundImage: string | null;
-  backgroundVideo?: string;
+  /**
+   * Public path to the background video, e.g. "/images/event_47.mp4".
+   * Optional — falls back to DEFAULT_BACKGROUND_VIDEO if not provided.
+   */
+  backgroundVideo?: string | null;
   childId?: number;
 }
 
 type SpotFormValues = EventLobbySpotInput & { id?: number };
+
+/**
+ * Normalizes a possibly-Windows-style or public-prefixed path into a
+ * browser-safe root-relative URL.
+ * "\public\images\event_47.mp4" -> "/images/event_47.mp4"
+ * "public/images/event_47.mp4"  -> "/images/event_47.mp4"
+ * "/images/event_47.mp4"        -> "/images/event_47.mp4" (unchanged)
+ */
+function toPublicPath(path?: string | null): string | undefined {
+  if (!path) return undefined;
+  return (
+    "/" +
+    path
+      .replace(/\\/g, "/")          // backslashes -> forward slashes
+      .replace(/^\/?public\//i, "") // strip a leading "public/" segment
+      .replace(/^\/+/, "")          // strip any remaining leading slashes
+  );
+}
 
 function SpotFormModal({
   defaultValues,
@@ -148,7 +173,6 @@ function SpotFormModal({
 
 export function LobbySpotsCanvas({
   spots,
-  backgroundImage,
   backgroundVideo,
   childId,
 }: LobbySpotsCanvasProps) {
@@ -160,7 +184,19 @@ export function LobbySpotsCanvas({
   const [modalSpot, setModalSpot] = useState<SpotFormValues | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Use the provided backgroundVideo if given, otherwise fall back to the default file.
+  const requestedSrc = toPublicPath(backgroundVideo) ?? DEFAULT_BACKGROUND_VIDEO;
+
+  /**
+   * Last-resort guard: if the requested clip cannot be loaded (wrong folder,
+   * not yet migrated, unsupported codec), swap to the bundled clip rather than
+   * leaving an empty black box with the spot markers floating on nothing.
+   */
+  const [srcFailed, setSrcFailed] = useState(false);
+  const videoSrc = srcFailed ? DEFAULT_BACKGROUND_VIDEO : requestedSrc;
+
   useEffect(() => setLocalSpots(spots), [spots]);
+  useEffect(() => setSrcFailed(false), [requestedSrc]);
 
   function relativePosition(clientX: number, clientY: number) {
     const rect = containerRef.current!.getBoundingClientRect();
@@ -245,22 +281,14 @@ export function LobbySpotsCanvas({
     }
   }
 
-  if (!backgroundImage && !backgroundVideo) {
-    return (
-      <div className="rounded-2xl border border-dashed border-indigo-950/15 bg-white p-10 text-center text-indigo-950/60">
-        Add a splash/logo image on the Parent Lobby Details tab first — spots are placed on top of that image.
-      </div>
-    );
-  }
-
   return (
     <div>
       {errorMessage && <p className="mb-3 text-sm text-red-600">{errorMessage}</p>}
 
       <p className="mb-3 text-sm text-slate-500">
         {addType
-          ? `Click anywhere on the image below to place a "${TYPE_META[addType].label}" spot.`
-          : "Pick a spot type from the toolbar below, then click the image to place it. Drag existing spots to reposition, click a spot to edit it."}
+          ? `Click anywhere on the video below to place a "${TYPE_META[addType].label}" spot.`
+          : "Pick a spot type from the toolbar below, then click the video to place it. Drag existing spots to reposition, click a spot to edit it."}
       </p>
 
       <div
@@ -268,19 +296,21 @@ export function LobbySpotsCanvas({
         onClick={handleBackgroundClick}
         className={`relative w-full overflow-hidden border border-slate-200 ${addType ? "cursor-crosshair" : ""}`}
       >
-        {backgroundVideo ? (
-          <video autoPlay muted loop playsInline preload="auto" className="block w-full select-none">
-            <source src={backgroundVideo} type="video/mp4" />
-          </video>
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={backgroundImage ?? "/images/lobby-placeholder.jpg"}
-            alt="Lobby background"
-            className="block w-full select-none"
-            draggable={false}
-          />
-        )}
+        <video
+          key={videoSrc}
+          src={videoSrc}
+          onError={() => {
+            if (videoSrc !== DEFAULT_BACKGROUND_VIDEO) setSrcFailed(true);
+            else console.error(`[LobbySpotsCanvas] background video failed to load: ${videoSrc}`);
+          }}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          className="block min-h-[280px] w-full select-none object-cover"
+        />
+
         {localSpots.map((spot) => {
           const type = (spot.spotType as (typeof LOBBY_SPOT_TYPES)[number]) ?? "info";
           const meta = TYPE_META[type] ?? TYPE_META.info;
@@ -309,7 +339,6 @@ export function LobbySpotsCanvas({
                   />
                 )}
 
-                {/* Always-visible tick / edit / delete cluster */}
                 <div className="absolute left-full top-0 ml-1 flex flex-col gap-1">
                   <button
                     onClick={(e) => {

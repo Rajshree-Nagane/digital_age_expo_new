@@ -36,13 +36,7 @@ export default async function ContactPage() {
       >
         {/* Background Image Wrapper */}
         <div className="absolute inset-0 z-0">
-          <Image
-            src={staticAssetUrl("https://digitalageexpo.com/files/listing_pages/817601-CONTACT_IMAGE.jpg")}
-            alt="Contact Us Cover"
-            fill
-            priority
-            className="object-cover opacity-50"
-          />
+          
           <div className="absolute inset-0 z-10 bg-gradient-to-t from-zinc-950 via-zinc-950/55 to-brand-purple/50" />
         </div>
 

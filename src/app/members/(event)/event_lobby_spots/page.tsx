@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import * as nodePath from "node:path";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { Home, ChevronRight, CircleDot } from "lucide-react";
@@ -9,10 +11,44 @@ import { getChildLobbyById } from "@/lib/services/eventLobbyChild";
 import { getSpots } from "@/lib/services/eventLobbySpots";
 import { LobbySpotsCanvas } from "@/components/dashboard/LobbySpotsCanvas";
 import { LobbySubNav } from "@/components/dashboard/LobbySubNav";
-import { staticAssetUrl } from "@/lib/assets";
+import { isLobbyVideoAsset, lobbyAssetUrl, standTemplateUrl } from "@/lib/assets";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Lobby Spots | Event Management" };
+
+/**
+ * Shipped in this repo at public/images/event_47.mp4 — used only when an event
+ * has no lobby background configured at all. Was pointing at `event_45.mp4`,
+ * which does not exist, so the <video> element had no playable source and
+ * collapsed to a sliver, leaving the spot markers floating on a black strip.
+ */
+const DEFAULT_LOBBY_VIDEO = "/images/event_47.mp4";
+
+/**
+ * True when a site-root path like "/images/event_47.mp4" is a real file in public/.
+ *
+ * This is the check that was missing. `lobbyAssetUrl()` happily produces
+ * "/images/external/lobby/event_47.mp4" for a lobby row holding "event_47.mp4",
+ * but public/images/external/ does not exist until
+ * `scripts/download-external-images.ts` has been run — so that path 404s and the
+ * <video> element renders an empty black box. A string-level normaliser cannot
+ * detect this: the URL is perfectly well-formed, it just points at a directory
+ * with nothing in it. Only touching the filesystem can tell the difference.
+ *
+ * Safe in a Server Component, and a single stat() on a `force-dynamic` admin
+ * page. Once the migration has run, the event's own clip starts being used
+ * automatically with no further code change.
+ */
+function publicFileExists(url: string | null | undefined): boolean {
+  if (!url || !url.startsWith("/")) return false;
+  const relative = decodeURIComponent(url.split(/[?#]/)[0]).replace(/^\/+/, "");
+  if (!relative || relative.includes("..")) return false;
+  try {
+    return existsSync(nodePath.join(process.cwd(), "public", relative));
+  } catch {
+    return false;
+  }
+}
 
 function Breadcrumb({ eventId }: { eventId?: number }) {
   return (
@@ -89,12 +125,40 @@ export default async function EventLobbySpotsPage({
   }
 
   const child = childId ? await getChildLobbyById(context, childId) : null;
-// Use child image if available, otherwise parent image.
-// If neither exists, use the default lobby video.
-const backgroundImage = child?.image ?? lobby.image ?? null;
 
-const backgroundVideo =
-  staticAssetUrl("https://digitalageexpo.com/files/lobby/event_45.mp4?revision=aa1e7094c326207fe9f239adf18b25c0");  const spots = await getSpots(context, { eventLayoutId: lobby.id, childId: child?.id ?? null });
+  /*
+   * The spots canvas is backed by a VIDEO only — LobbySpotsCanvas no longer
+   * renders a still-image fallback, so it doesn't take a backgroundImage prop.
+   *
+   * `lobby.image` / `child.image` hold bare legacy filenames that resolve into
+   * /images/external/** — assets that only exist once the image migration has
+   * actually downloaded them.
+   *
+   * Being "confirmed a video asset" was NOT enough: a lobby row holding
+   * "event_47.mp4" resolves to /images/external/lobby/event_47.mp4, which passes
+   * every string-level check yet 404s, because public/images/external/ has never
+   * been created. The real file lives at /images/event_47.mp4. So the resolved
+   * path is now also required to EXIST on disk before we use it.
+   *
+   * Rule for this page: play the event's own background clip when the lobby is
+   * configured with one AND that file is actually present; otherwise play the
+   * clip bundled in this repo.
+   */
+  const rawBackground = child?.image ?? lobby.image ?? null;
+  const resolvedBackground = child?.image
+    ? standTemplateUrl(child.image)
+    : lobbyAssetUrl(lobby.image);
+
+  const configuredVideo =
+    resolvedBackground &&
+    isLobbyVideoAsset(rawBackground) &&
+    publicFileExists(resolvedBackground)
+      ? resolvedBackground
+      : null;
+
+  const backgroundVideo: string = configuredVideo ?? DEFAULT_LOBBY_VIDEO;
+
+  const spots = await getSpots(context, { eventLayoutId: lobby.id, childId: child?.id ?? null });
 
   return (
     <div className="section-transition space-y-6 animate-fade-in">
@@ -114,12 +178,12 @@ const backgroundVideo =
           </div>
         </div>
 
-<LobbySpotsCanvas
-  spots={spots}
-  backgroundImage={backgroundImage}
-  backgroundVideo={backgroundVideo}
-  childId={child?.id}
-/>      </div>
+        <LobbySpotsCanvas
+          spots={spots}
+          backgroundVideo={backgroundVideo}
+          childId={child?.id}
+        />
+      </div>
     </div>
   );
 }

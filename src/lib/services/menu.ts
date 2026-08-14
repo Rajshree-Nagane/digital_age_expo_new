@@ -165,16 +165,142 @@ export function appliesToDomain(domainId: string | null): boolean {
     .includes(String(DOMAIN_ID));
 }
 
-function resolveLink(link: string): string {
-  if (!link) return "#";
-  let clean = link.replace(/^https?:\/\/(www\.)?digitalageexpo\.com/, "");
-  if (clean.startsWith("http://") || clean.startsWith("https://")) {
-    return clean;
-  }
-  if (!clean.startsWith("/") && !clean.startsWith("#") && !clean.startsWith("?")) {
+/**
+ * Every host the old platform was served from.
+ *
+ * The virtual-event experience lived on the `apps.` subdomain — a CMS row for
+ * "Visitor Login" points at
+ *   https://www.apps.digitalageexpo.com/login/<friendly_url>?from=<base64>
+ * Stripping only `digitalageexpo.com` left that absolute URL intact, so the nav
+ * item navigated the visitor OFF this app and back onto the legacy PHP site
+ * instead of opening our own VisitorLoginForm. `apps.` and `www.apps.` (plus the
+ * sibling brands sharing the install) all have to be recognised as "us".
+ */
+const LEGACY_SITE_HOST_RE =
+  /^https?:\/\/(?:www\.)?(?:apps\.)?(?:digitalageexpo|tradeshowslocal|findusonweb)\.com/i;
+
+/**
+ * Legacy path SHAPES -> this app's routes.
+ *
+ * These carry a slug, so an exact-match table can't express them.
+ *   /login/<friendly_url>  ->  /virtual-event/<friendly_url>/login   (the Visitor Login form)
+ *   /lobby/<friendly_url>  ->  /virtual-event/<friendly_url>         (the show floor itself)
+ */
+const LEGACY_PATH_PATTERNS: { test: RegExp; to: (m: RegExpMatchArray) => string }[] = [
+  { test: /^\/login\/([^/?#]+)\/?$/i, to: (m) => `/virtual-event/${m[1]}/login` },
+  { test: /^\/lobby\/([^/?#]+)\/?$/i, to: (m) => `/virtual-event/${m[1]}` },
+  { test: /^\/virtual-event\/([^/?#]+)\/login\/?$/i, to: (m) => `/virtual-event/${m[1]}/login` },
+];
+
+/**
+ * Legacy `.php` page -> this app's route.
+ *
+ * `find_menu_links` rows were authored against the old PHP site and were never
+ * rewritten when it moved to Next, so some still point at filenames that don't
+ * exist here. Left alone they fall through to src/app/[...slug], which renders a
+ * generic "Return To Home" placeholder.
+ *
+ * Add a row here whenever another stale legacy target turns up — cheaper and
+ * safer than hand-editing production CMS data.
+ */
+const LEGACY_PATH_ROUTES: Record<string, string> = {
+  "enter_the_show.php": "/enter-the-show",
+  "enter-the-show.php": "/enter-the-show",
+  "visitor_login.php": "/enter-the-show",
+  "visitor-login.php": "/enter-the-show",
+  "lobby_login.php": "/enter-the-show",
+  "lobby.php": "/enter-the-show",
+  "contact.php": "/contact",
+  "frequently-asked-questions.php": "/frequently-asked-questions",
+  "faq.php": "/frequently-asked-questions",
+  "magazine.php": "/magazine",
+  "view_speaker.php": "/view_speaker",
+  "view_sponsor.php": "/view_sponsor",
+  "view_gallery.php": "/view_gallery",
+  "view_industry_list.php": "/view_industry_list",
+  "event_schedule.php": "/event_schedule",
+  "exhibitor_registration.php": "/exhibitor-registration",
+  "speaker_registration.php": "/speaker_registration",
+  "sponsor_registration.php": "/sponsor_registration",
+  "buy_tickets.php": "/buy_tickets",
+  "members/index.php": "/members/index",
+};
+
+function normaliseTitle(title: string): string {
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+/**
+ * title -> route, derived from DEFAULT_MENU so there is exactly one source of
+ * truth for "where should the nav item called X actually go". Titles whose
+ * default link is itself a non-destination ("#" or "/") are skipped, so this can
+ * only ever upgrade a broken link — never introduce one.
+ */
+const DEFAULT_ROUTE_BY_TITLE: Map<string, string> = (() => {
+  const map = new Map<string, string>();
+  const walk = (items: MenuItem[]) => {
+    for (const item of items) {
+      const key = normaliseTitle(item.title);
+      if (item.link && item.link !== "#" && item.link !== "/" && !map.has(key)) {
+        map.set(key, item.link);
+      }
+      walk(item.children);
+    }
+  };
+  walk(DEFAULT_MENU);
+  return map;
+})();
+
+/**
+ * Normalises a CMS menu link into something this app can actually route to.
+ *
+ * The `title` argument is the important part. A number of legacy rows store the
+ * bare site root (`https://digitalageexpo.com/`, or just `/`) as their link,
+ * because on the old site the real destination came from a query string or a PHP
+ * include rather than from the URL. Those collapse to "/" and silently drop the
+ * visitor on the home page — which is exactly what "Visitor Login" was doing.
+ * When the stored link carries no destination, fall back to the route
+ * DEFAULT_MENU defines for that title.
+ *
+ * Precedence: real path > legacy .php mapping > title fallback.
+ */
+function resolveLink(link: string, title = ""): string {
+  const titleFallback = DEFAULT_ROUTE_BY_TITLE.get(normaliseTitle(title));
+
+  // Anything on a host the old platform used is really OUR content — bring it
+  // back in-app rather than bouncing the visitor to the legacy site.
+  let clean = (link ?? "").trim().replace(LEGACY_SITE_HOST_RE, "");
+
+  // Past-event subdomains (july./november.) and partner sites are genuinely
+  // external and must keep their absolute URL.
+  if (/^https?:\/\//i.test(clean)) return clean;
+
+  if (clean && !clean.startsWith("/") && !clean.startsWith("#") && !clean.startsWith("?")) {
     clean = `/${clean}`;
   }
-  return clean || "/";
+
+  const [pathOnly, query] = clean.split("?");
+
+  // Legacy path shape carrying a slug (/login/<friendly_url>, /lobby/<slug>).
+  // The legacy `?from=<base64>` return-url param is deliberately dropped: this
+  // app's VisitorLoginForm routes to /virtual-event/<slug> on success itself.
+  for (const { test, to } of LEGACY_PATH_PATTERNS) {
+    const match = pathOnly.match(test);
+    if (match) return to(match);
+  }
+
+  // Legacy .php target -> real route, preserving any query string.
+  const legacy = LEGACY_PATH_ROUTES[pathOnly.replace(/^\//, "").toLowerCase()];
+  if (legacy) {
+    return query ? `${legacy}?${query}` : legacy;
+  }
+
+  // Link carries no destination — use the title's known route if we have one.
+  if (!clean || clean === "/" || clean === "#") {
+    return titleFallback ?? (clean || "#");
+  }
+
+  return clean;
 }
 
 /** CMS-managed navigation (find_menu_links), mirrors class_menu_links.php::getLinks(). */
@@ -201,7 +327,7 @@ export async function getMenu(): Promise<MenuItem[]> {
         byId.set(row.id, {
           id: row.id,
           title: row.title,
-          link: resolveLink(row.link),
+          link: resolveLink(row.link, row.title),
           target: row.target || "_self",
           children: [],
         });

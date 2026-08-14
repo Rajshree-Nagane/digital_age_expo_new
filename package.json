@@ -10,7 +10,8 @@
     "lint": "eslint",
     "images:audit": "tsx scripts/download-external-images.ts audit",
     "images:download": "tsx scripts/download-external-images.ts download",
-    "images:verify": "tsx scripts/download-external-images.ts verify"
+    "images:verify": "tsx scripts/download-external-images.ts verify",
+    "db:ping": "tsx scripts/db-ping.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

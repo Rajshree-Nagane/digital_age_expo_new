@@ -107,15 +107,45 @@ interface EventAdminNavbarProps {
    Do NOT depend on database/SQL/default sorting.
 ============================================================ */
 
-const TAB_ORDER = [
-  "LGTS",     // View Event Summary
-  "LGTMM",    // Setup Event
-  "LGTCL",    // Configure Virtual Event
-  "LGTME",    // Manage Events
-  "LTGMVB",   // Manage Virtual Booth
-  "LGTBUY",   // Manage Event Orders
-  "LTGDO",    // Download Orders
+const TAB_ORDER: { code: string; label: string }[] = [
+  { code: "LGTS",   label: "View Event Summary" },
+  { code: "LGTMM",  label: "Setup Event" },
+  { code: "LGTCL",  label: "Configure Virtual Event" },
+  { code: "LGTME",  label: "Manage Events" },
+  { code: "LTGMVB", label: "Manage Virtual Booth" },
+  { code: "LGTBUY", label: "Manage Event Orders" },
+  { code: "LTGDO",  label: "Download Orders" },
 ];
+
+/**
+ * Tabs are matched by LABEL as well as by code, because the code is not reliably
+ * present.
+ *
+ * getLiveMemberMenu() builds a tab's `code` as `row.attribute?.trim() || label`,
+ * so on any find_event_menus row where `attribute` was never backfilled the
+ * `code` silently becomes the human label ("Configure Virtual Event"). Nothing
+ * then matched TAB_ORDER, every tab scored MAX_SAFE_INTEGER, the sort collapsed
+ * into a no-op, and the tabs kept whatever order the query returned — which is
+ * `ORDER BY menu_group ASC`, i.e. alphabetical. That is precisely the order that
+ * was showing in the UI.
+ *
+ * Matching on the label as well makes the intended order hold whether or not the
+ * DB rows carry `attribute`, and equally repairs getTabColors(), which switches
+ * on the same code.
+ */
+const normaliseKey = (value: string) => value.trim().toLowerCase().replace(/\s+/g, " ");
+
+function canonicalTabCode(code: string, label: string): string {
+  const c = normaliseKey(code);
+  const l = normaliseKey(label);
+  const match = TAB_ORDER.find(
+    (tab) =>
+      normaliseKey(tab.code) === c ||
+      normaliseKey(tab.label) === c ||
+      normaliseKey(tab.label) === l,
+  );
+  return match ? match.code : code;
+}
 
 /* ============================================================
    ICON MAP
@@ -222,9 +252,10 @@ function pathOf(href: string): string {
 ============================================================ */
 
 function getTabOrder(code: string): number {
-  const index = TAB_ORDER.indexOf(code);
+  const index = TAB_ORDER.findIndex((tab) => tab.code === code);
 
-  // Unknown/new tabs go after all configured tabs.
+  // Unknown/new tabs go after all configured tabs, keeping their relative
+  // database order among themselves (Array.prototype.sort is stable).
   return index === -1 ? Number.MAX_SAFE_INTEGER : index;
 }
 
@@ -257,7 +288,9 @@ function resolveTabs(
   eventId: number | string
 ): Tab[] {
   const resolvedTabs: Tab[] = rawTabs.map((tab) => ({
-    code: tab.code,
+    // Normalise first: everything downstream (ordering AND getTabColors) keys off
+    // this, and the DB's `attribute` column may be empty. See canonicalTabCode().
+    code: canonicalTabCode(tab.code, tab.label),
     label: tab.label,
     icon: resolveIcon(tab.icon),
 
