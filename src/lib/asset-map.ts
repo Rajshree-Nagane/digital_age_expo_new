@@ -60,11 +60,19 @@ export const EXTERNAL_ROOT = "/images/external";
 export const PLACEHOLDER_IMAGE = "/images/image-placeholder.png";
 
 /**
- * `/files/...` normally means "legacy remote upload", but the CP's own upload
- * route (src/app/api/cp/settings/upload/route.ts) writes genuinely local files
- * to `public/files/settings/`. Those must pass through untouched.
+ * `/files/...` normally means "legacy remote upload", but some of this app's own
+ * upload routes write genuinely local files under `public/files/`:
+ *   - src/app/api/cp/settings/upload      -> public/files/settings/
+ *   - src/app/api/members/news-feed/upload -> public/files/feeds/
+ *   - src/app/api/members/leadership-board/upload -> public/files/feeds/
+ * Those must pass through untouched.
+ *
+ * Only *bare root-relative* values reach this check. Legacy rows store feed
+ * images as ABSOLUTE urls (news_feed.php saved `BASE_URL.'/files/feeds/…'`),
+ * which are handled by the absolute-url branch above and still map to the
+ * mirror — so listing `/files/feeds/` here does not break legacy assets.
  */
-const LOCAL_FILE_PREFIXES = ["/files/settings/"];
+const LOCAL_FILE_PREFIXES = ["/files/settings/", "/files/feeds/"];
 
 /** Anything already living under one of these is a real file in `public/`. */
 const LOCAL_ROOT_PREFIXES = ["/images/", "/_next/", "/assets/", "/fonts/", "/videos/"];

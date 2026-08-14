@@ -99,6 +99,16 @@ export async function deleteNewsFeedItem(context: EventMemberContext, id: number
   return prisma.find_feeds_external.deleteMany({ where: { id, event_id: context.eventId, type: "internal_feed" } });
 }
 
+/** Mirrors news_feed.php's post-insert image copy to `/files/feeds/<id>.<ext>` — the row
+ * must exist first, because the legacy filename is keyed by the row's own id. */
+export async function setNewsFeedImage(context: EventMemberContext, id: number, url: string) {
+  if (context.role !== "organiser") return { count: 0 };
+  return prisma.find_feeds_external.updateMany({
+    where: { id, event_id: context.eventId, type: "internal_feed" },
+    data: { image: url },
+  });
+}
+
 export async function setNewsFeedActive(context: EventMemberContext, id: number, active: boolean) {
   if (context.role !== "organiser") return { count: 0 };
   return prisma.find_feeds_external.updateMany({
