@@ -82,9 +82,18 @@ async function selectForEvent(eventId: number): Promise<any[]> {
  * Lists the event's fields, seeding them on first visit.
  *
  * Mirrors the PHP: when an event has no rows yet, copy the template set held
- * against `event_id = 0 AND is_default = 1`. Seeding deliberately does NOT copy
- * `login` or `is_custom` — matching the legacy INSERT..SELECT column list, so
- * seeded rows start as non-custom (locked switches) exactly as before.
+ * against `event_id = 0 AND is_default = 1`. `is_custom` is deliberately NOT
+ * copied, so seeded rows start as non-custom (locked switches) exactly as
+ * before.
+ *
+ * ONE DELIBERATE DIVERGENCE: the legacy INSERT..SELECT column list was
+ *   (event_id, field_name, field_type, field_variable, is_active, is_required)
+ * — it omitted `login`, so every seeded row got login = 0 regardless of the
+ * template. On the live site Password is configured with "Validate on Login"
+ * ON, and that setting was silently dropped for each new event. Because
+ * built-in rows render with LOCKED switches, an organiser then had no way to
+ * turn it back on from the UI — the value was unreachable. `login` is carried
+ * through here so the seeded set actually matches the template.
  */
 export async function listRegistrationFields(
   context: EventMemberContext,
@@ -96,10 +105,11 @@ export async function listRegistrationFields(
   if (records.length === 0) {
     await prisma.$executeRaw`
       INSERT INTO find_event_registration_fields
-        (event_id, field_name, field_type, field_variable, is_active, is_required)
-      SELECT ${eventId}, field_name, field_type, field_variable, is_active, is_required
+        (event_id, field_name, field_type, field_variable, is_active, is_required, login, options)
+      SELECT ${eventId}, field_name, field_type, field_variable, is_active, is_required, login, options
         FROM find_event_registration_fields
        WHERE event_id = 0 AND is_default = 1
+       ORDER BY id ASC
     `;
     records = await selectForEvent(eventId);
   }

@@ -75,15 +75,28 @@ export default async function ManageRegistrationPage({
     );
   }
 
-  // A database outage shouldn't take the whole screen down with a runtime error
-  // page — show the message inline and keep the chrome intact.
+  // A database problem shouldn't take the whole screen down with a runtime error
+  // page — show an actionable message inline and keep the chrome intact.
   let fields: RegistrationFieldRow[] = [];
   let loadError: string | null = null;
   try {
     fields = await listRegistrationFields(context);
   } catch (e) {
-    loadError = "Could not load the registration fields. Check the database connection and reload.";
-    console.error("[manage_registration] failed to load registration fields", e);
+    /*
+     * Postgres 42P01 = undefined_table. `find_event_registration_fields` exists
+     * in the legacy MySQL install but was not carried across in the migration to
+     * Neon, so this is the expected first-run state rather than a bug — and it
+     * needs a specific instruction, not "check your connection".
+     */
+    const message = e instanceof Error ? e.message : String(e);
+    const tableMissing = message.includes("42P01") || /relation .* does not exist/i.test(message);
+
+    loadError = tableMissing ? "TABLE_MISSING" : "LOAD_FAILED";
+
+    // console.warn, not console.error: the missing-table case is an expected
+    // first-run state with a clear on-screen instruction, and Next's dev overlay
+    // promotes console.error into a red error dialog that looks like a crash.
+    console.warn(`[manage_registration] ${loadError}: ${message}`);
   }
 
   return (
@@ -106,9 +119,25 @@ export default async function ManageRegistrationPage({
           </div>
         </div>
 
-        {loadError ? (
+        {loadError === "TABLE_MISSING" ? (
+          <div className="space-y-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-5 text-amber-200">
+            <p className="text-sm font-black uppercase tracking-wide">One-time setup needed</p>
+            <p className="text-xs leading-relaxed">
+              The <code className="rounded bg-black/40 px-1.5 py-0.5">find_event_registration_fields</code>{" "}
+              table doesn&apos;t exist in this database yet — it was never carried across from the
+              legacy install. Create it and seed the default field set with:
+            </p>
+            <pre className="overflow-x-auto rounded-lg bg-black/50 px-4 py-3 text-xs font-bold text-emerald-300">
+              npm run db:registration-fields
+            </pre>
+            <p className="text-[11px] text-amber-200/70">
+              Safe to re-run — it only creates what is missing and never touches existing rows.
+              Then reload this page.
+            </p>
+          </div>
+        ) : loadError ? (
           <p className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-xs font-bold text-red-300">
-            {loadError}
+            Could not load the registration fields. Check the database connection and reload.
           </p>
         ) : (
           <RegistrationFieldsManager eventId={eventId} fields={fields} />
