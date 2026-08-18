@@ -19,6 +19,8 @@ import { BlogsAndNews } from "@/components/home/BlogsAndNews";
 import { CharityPartners } from "@/components/home/CharityPartners";
 import { B2BGrowthFlywheel } from "@/components/home/B2BGrowthFlywheel";
 
+import { DatabaseOutageNotice } from "@/components/common/DatabaseOutageNotice";
+
 export default async function HomePage() {
   const domain = await getDomain();
 
@@ -30,7 +32,15 @@ export default async function HomePage() {
     phrases,
     exhibitors,
     scheduleDays,
+    dbOutage,
   } = await getHomePageData(domain);
+
+  // The database itself refused the queries (plan quota reached, server asleep/unreachable,
+  // connection pool exhausted) and we got nothing usable back. Say that specifically instead of
+  // claiming no event is configured — the event almost certainly exists, we just can't read it.
+  if (!event && dbOutage) {
+    return <DatabaseOutageNotice outage={dbOutage} />;
+  }
 
   // No event configured
   if (!event) {
@@ -57,6 +67,10 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen bg-surface-1 text-white">
+      {/* Partial outage: the event loaded but one or more sections came back empty because the
+          database rejected their queries. Render the page anyway, flagged. */}
+      {dbOutage && <DatabaseOutageNotice outage={dbOutage} variant="banner" />}
+
       {/* =========================================
           1. HERO SECTION
       ========================================= */}

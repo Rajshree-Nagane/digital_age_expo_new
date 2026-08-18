@@ -5,6 +5,7 @@ import { getApprovedSponsors } from "@/lib/services/sponsors";
 import type { SiteDomain } from "@/lib/services/domain";
 import { getEventExhibitors } from "@/lib/services/exhibitors";
 import { getEventSchedule } from "@/lib/services/schedule";
+import { createOutageCollector, type DatabaseOutage } from "@/lib/db-errors";
 
 const SPEAKER_LIMIT = 8;
 
@@ -36,6 +37,17 @@ async function getCharityPartners(listingId: number) {
   });
 }
 
+const EMPTY_OPPORTUNITY_CONTENT = {
+  aboutEvent: null as any,
+  sponsorHostData: [] as any[],
+  exploreEvent: null as any,
+  joinFacebook: null as any,
+  bookYourStand: null as any,
+  topBanner: null as any,
+};
+
+export type OpportunityContent = typeof EMPTY_OPPORTUNITY_CONTENT;
+
 export async function getOpportunityContent(listingId: number) {
   const [aboutEvent, sponsorHostData, exploreEvent, joinFacebook, bookYourStand, topBanner] =
     await Promise.all([
@@ -65,44 +77,70 @@ export async function getOpportunityContent(listingId: number) {
   return { aboutEvent, sponsorHostData, exploreEvent, joinFacebook, bookYourStand, topBanner };
 }
 
+/**
+ * Loads everything the home page renders.
+ *
+ * Every query is individually guarded (see src/lib/db-errors.ts). Previously these ran bare
+ * inside `Promise.all`, so one infrastructure-level rejection — the database hitting a plan
+ * quota, going to sleep, or running out of connections — rejected the whole batch, propagated out
+ * of the server component and replaced the entire site with a Prisma stack trace.
+ *
+ * Guarding each query means such a failure now degrades instead: the sections that could not load
+ * come back empty, everything that did load still renders, and `dbOutage` carries a single
+ * explanation for the page to show the visitor. Ordinary query bugs are NOT swallowed — they
+ * still throw, so real regressions stay visible.
+ */
 export async function getHomePageData(domain: SiteDomain) {
   const eventId = domain.event_id;
   const listingId = domain.linked_profile_listing_id;
+  // NB: keep the collector object intact — `current` is a getter, so spreading/destructuring it
+  // would snapshot the (still null) value before any query has had a chance to fail.
+  const collector = createOutageCollector();
+  const guard = collector.guard;
 
   const [event, eventDates, speakers, sponsors, charityPartners, opportunityContent, phrases, exhibitors, scheduleDays] =
     await Promise.all([
-      eventId ? getEventById(eventId) : null,
-      eventId ? getEventDateRange(eventId) : null,
-      eventId ? getSpeakers(eventId) : [],
-      eventId ? getApprovedSponsors(eventId) : [],
-      listingId ? getCharityPartners(listingId) : [],
+      eventId ? guard(() => getEventById(eventId), null) : null,
+      eventId ? guard(() => getEventDateRange(eventId), null) : null,
+      eventId ? guard(() => getSpeakers(eventId), [] as any[]) : [],
+      eventId ? guard(() => getApprovedSponsors(eventId), [] as any[]) : [],
+      listingId ? guard(() => getCharityPartners(listingId), [] as any[]) : [],
       listingId
-        ? getOpportunityContent(listingId)
-        : {
-            aboutEvent: null,
-            sponsorHostData: [],
-            exploreEvent: null,
-            joinFacebook: null,
-            bookYourStand: null,
-            topBanner: null,
-          },
-      getPhrases([
-        "counter_visitors",
-        "counter_exhibitors",
-        "counter_speakers",
-        "counter_workshop",
-        "buy_tickets_hurry_up",
-        "buy_tickets_hurryup_subtext",
-        "get_free_ticket_now",
-        "get_free_ticket_now_desc",
-        "listen_to_the",
-        "speakers",
-      ]),
-      eventId ? getEventExhibitors(eventId) : [],
-      eventId ? getEventSchedule(eventId) : [],
+        ? guard(() => getOpportunityContent(listingId), EMPTY_OPPORTUNITY_CONTENT)
+        : EMPTY_OPPORTUNITY_CONTENT,
+      guard(
+        () =>
+          getPhrases([
+            "counter_visitors",
+            "counter_exhibitors",
+            "counter_speakers",
+            "counter_workshop",
+            "buy_tickets_hurry_up",
+            "buy_tickets_hurryup_subtext",
+            "get_free_ticket_now",
+            "get_free_ticket_now_desc",
+            "listen_to_the",
+            "speakers",
+          ]),
+        {} as Record<string, string>
+      ),
+      eventId ? guard(() => getEventExhibitors(eventId), [] as any[]) : [],
+      eventId ? guard(() => getEventSchedule(eventId), [] as any[]) : [],
     ]);
 
-  return { event, eventDates, speakers, sponsors, charityPartners, opportunityContent, phrases, exhibitors, scheduleDays };
+  return {
+    event,
+    eventDates,
+    speakers,
+    sponsors,
+    charityPartners,
+    opportunityContent,
+    phrases,
+    exhibitors,
+    scheduleDays,
+    /** Non-null when at least one query was rejected by the database itself. */
+    dbOutage: collector.current as DatabaseOutage | null,
+  };
 }
 
 export type HomePageData = Awaited<ReturnType<typeof getHomePageData>>;
