@@ -41,6 +41,156 @@ if (!PG_URL) {
   process.exit(1);
 }
 
+// ============================================================================
+//  DAE-ONLY SUBSET MODE   (DAE_ONLY=1)
+// ============================================================================
+//
+//  Added when the data had to be moved a second time, from this same MySQL copy
+//  into Prisma Postgres. The difference from the original Neon run is storage:
+//  `connectlocal_website` is a multi-tenant legacy platform, and the 103 tables
+//  this script copies come to ~2.6 GB — but only a fraction of that belongs to
+//  Digital Age Expo. The rest is other tenants' listings plus pure log/history
+//  tables (find_events_rsvp alone is 1.2M rows, find_search_log 234k).
+//
+//  With DAE_ONLY=1 each table is restricted to rows reachable from domain 150,
+//  which brings the copy inside a 500 MB budget. Without the flag the script
+//  behaves exactly as it always did — a full copy — so the original migration
+//  stays reproducible.
+//
+//  HOW SCOPE IS DERIVED
+//
+//    domain      find_domains.id = 150            (src/lib/site-config.ts DOMAIN_ID)
+//    events      1474 and 852                     see EVENT_IDS below
+//    listings    every listing_id referenced by the domain row, those events, and
+//                their exhibitors / sponsors / speakers. NOT find_listings.domain_id
+//                — that column is 0 for every row here, so filtering on it would
+//                silently import nothing.
+//    users       the 45 accounts in the administrator-ish groups (so CP login keeps
+//                working) plus every user_id referenced by the scoped rows. Again
+//                NOT find_users.domain_id, which is likewise unpopulated.
+//
+//  Any table that cannot be scoped and is too large to copy whole is SKIPPED and
+//  named in the summary. Nothing is dropped quietly.
+//
+const DAE_ONLY = process.env.DAE_ONLY === "1";
+
+/** find_domains.id for digitalageexpo.com — mirrors DOMAIN_ID in src/lib/site-config.ts. */
+const DOMAIN_ID = 150;
+
+/**
+ * 1474 is the event the live site actually shows ("DIGITAL AGE EXPO 26TH - 28TH AUGUST 2026"),
+ * and is what find_domains(150).event_id points at. 852 is kept because it is DEFAULT_EVENT_ID in
+ * src/lib/site-config.ts — the value getDomain() falls back to when the CP's active-event setting
+ * is missing, which is exactly the state this MySQL copy is in (see the cp_active_event_id note at
+ * the end of main()). Importing both means the site renders either way.
+ */
+const EVENT_IDS = [1474, 852];
+
+/** Groups whose members administer the site; everyone else is an ordinary "Registered User". */
+const ADMIN_GROUP_IDS = [1, 2, 3, 6, 8];
+
+/** Pure log/history tables with no public or CP read path — never worth their size. */
+const SKIP_TABLES = new Set(["find_search_log"]);
+
+/** Copy an unscopeable table whole only if it is at most this many MB in MySQL. */
+const COPY_WHOLE_MAX_MB = 10;
+
+const sqlList = (ids) => (ids.length ? ids.join(",") : "NULL");
+
+/**
+ * Collects the listing ids and user ids reachable from domain 150, using temp tables so the
+ * id sets never have to be round-tripped through Node.
+ */
+async function buildScope(mysqlConn) {
+  await mysqlConn.query("DROP TEMPORARY TABLE IF EXISTS _dae_lids, _dae_uids");
+  await mysqlConn.query("CREATE TEMPORARY TABLE _dae_lids (id INT PRIMARY KEY)");
+  await mysqlConn.query("CREATE TEMPORARY TABLE _dae_uids (id INT PRIMARY KEY)");
+
+  const ev = sqlList(EVENT_IDS);
+  const listingSources = [
+    `SELECT linked_profile_listing_id FROM find_domains WHERE id = ${DOMAIN_ID} AND linked_profile_listing_id IS NOT NULL`,
+    `SELECT faq_listing_id FROM find_domains WHERE id = ${DOMAIN_ID} AND faq_listing_id IS NOT NULL`,
+    `SELECT listing_id FROM find_events WHERE id IN (${ev}) AND listing_id IS NOT NULL`,
+    `SELECT listing_id FROM find_event_exhibitor WHERE event_id IN (${ev}) AND listing_id IS NOT NULL`,
+    `SELECT listing_id FROM find_event_sponsorer WHERE event_id IN (${ev}) AND listing_id IS NOT NULL`,
+    `SELECT listing_id FROM find_speakers WHERE event_id IN (${ev}) AND listing_id IS NOT NULL`,
+  ];
+  for (const q of listingSources) {
+    await mysqlConn.query(`INSERT IGNORE INTO _dae_lids (id) ${q}`);
+  }
+
+  const userSources = [
+    `SELECT user_id FROM find_users_groups_lookup WHERE group_id IN (${sqlList(ADMIN_GROUP_IDS)}) AND user_id IS NOT NULL`,
+    `SELECT user_id FROM find_events WHERE id IN (${ev}) AND user_id IS NOT NULL`,
+    `SELECT user_id FROM find_speakers WHERE event_id IN (${ev}) AND user_id IS NOT NULL`,
+    `SELECT user_id FROM find_event_exhibitor WHERE event_id IN (${ev}) AND user_id IS NOT NULL`,
+    `SELECT user_id FROM find_event_sponsorer WHERE event_id IN (${ev}) AND user_id IS NOT NULL`,
+    `SELECT l.user_id FROM find_listings l JOIN _dae_lids d ON d.id = l.id WHERE l.user_id IS NOT NULL`,
+  ];
+  for (const q of userSources) {
+    await mysqlConn.query(`INSERT IGNORE INTO _dae_uids (id) ${q}`);
+  }
+
+  const [[{ c: listings }]] = await mysqlConn.query("SELECT COUNT(*) c FROM _dae_lids");
+  const [[{ c: users }]] = await mysqlConn.query("SELECT COUNT(*) c FROM _dae_uids");
+  return { listings, users };
+}
+
+/** Per-table column + size facts, so filter choice is driven by the schema rather than guesswork. */
+async function loadTableFacts(mysqlConn, dbName) {
+  const [rows] = await mysqlConn.query(
+    `SELECT t.table_name AS name,
+            ROUND((t.data_length + t.index_length) / 1024 / 1024, 1) AS mb,
+            GROUP_CONCAT(c.column_name) AS cols
+       FROM information_schema.tables t
+       JOIN information_schema.columns c
+         ON c.table_schema = t.table_schema AND c.table_name = t.table_name
+      WHERE t.table_schema = ?
+      GROUP BY t.table_name, mb`,
+    [dbName]
+  );
+  const facts = new Map();
+  for (const r of rows) {
+    facts.set(r.name, {
+      mb: Number(r.mb) || 0,
+      cols: new Set(String(r.cols || "").split(",")),
+    });
+  }
+  return facts;
+}
+
+/**
+ * Returns the WHERE clause (without the keyword) for a table, `null` to copy it whole, or
+ * `{ skip, reason }` to leave it out entirely.
+ */
+function daeFilterFor(table, facts) {
+  if (SKIP_TABLES.has(table)) return { skip: true, reason: "log table, no read path" };
+
+  const f = facts.get(table);
+  if (!f) return null; // table missing from MySQL — migrateTable reports it
+
+  const ev = sqlList(EVENT_IDS);
+  const EXPLICIT = {
+    find_domains: `id = ${DOMAIN_ID}`,
+    find_events: `id IN (${ev})`,
+    find_settings: "`DOMAIN` = " + DOMAIN_ID,
+    find_listings: "id IN (SELECT id FROM _dae_lids)",
+    find_users: "id IN (SELECT id FROM _dae_uids)",
+    find_users_groups_lookup: "user_id IN (SELECT id FROM _dae_uids)",
+  };
+  if (EXPLICIT[table]) return EXPLICIT[table];
+
+  // Scope columns, most selective first: an event is a subset of a listing is a subset of a domain.
+  if (f.cols.has("event_id")) return `event_id IN (${ev})`;
+  if (f.cols.has("listing_id")) return "listing_id IN (SELECT id FROM _dae_lids)";
+  if (f.cols.has("DOMAIN")) return "`DOMAIN` = " + DOMAIN_ID;
+
+  // Unscopeable. Global lookup tables (phrases, pages, common_type, product catalogue...) are
+  // small and genuinely needed by every tenant, so copy them whole; anything big is skipped.
+  if (f.mb <= COPY_WHOLE_MAX_MB) return null;
+  return { skip: true, reason: `no scope column and ${f.mb} MB — too large to copy whole` };
+}
+
 // ---- every table Prisma manages, in the exact DB table name Prisma uses (no @@map divergence) --
 const TABLES = [
   "common_type",
@@ -682,8 +832,9 @@ function coerceEnumValue(table, column, value) {
   return { value: validValues[0] ?? null, coerced: true };
 }
 
-async function migrateTable(mysqlConn, pgPool, table) {
-  const [rows] = await mysqlConn.query(`SELECT * FROM \`${table}\``);
+async function migrateTable(mysqlConn, pgPool, table, where = null) {
+  const sql = `SELECT * FROM \`${table}\`` + (where ? ` WHERE ${where}` : "");
+  const [rows] = await mysqlConn.query(sql);
   if (rows.length === 0) {
     await pgPool.query(`TRUNCATE TABLE "${table}" RESTART IDENTITY CASCADE`);
     console.log(`  ${table}: 0 rows (nothing to copy)`);
@@ -696,7 +847,20 @@ async function migrateTable(mysqlConn, pgPool, table) {
 
   await pgPool.query(`TRUNCATE TABLE "${table}" RESTART IDENTITY CASCADE`);
 
-  const BATCH_SIZE = 500;
+  // Batch by PARAMETER count, not row count.
+  //
+  // A parameterised INSERT can carry at most 65535 bind parameters, and a batch uses
+  // rows x columns of them. The old flat 500 blew that ceiling on every wide table in this schema
+  // — find_listings has 236 columns (118,000 params), find_events_rsvp 181 (90,500), find_users
+  // 156 (78,000) — so their very first full batch was rejected and the code below fell back to
+  // inserting row by row. Over a network connection that measured ~4 rows/second: find_events_rsvp
+  // alone (26k rows in the DAE subset) would have taken over an hour and a half, and the whole
+  // migration about four hours.
+  //
+  // Sizing from the column count keeps every batch legal, so wide tables go at batch speed too.
+  // The 1000-row ceiling is just to bound memory for narrow tables (find_language_phrases has 6
+  // columns, which would otherwise allow ~10k rows in one statement).
+  const BATCH_SIZE = Math.max(1, Math.min(1000, Math.floor(65535 / Math.max(1, columns.length))));
   let inserted = 0;
   let errors = 0;
   let coercions = 0;
@@ -770,15 +934,61 @@ async function main() {
   const pgPool = new Pool({ connectionString: PG_URL });
 
   const summary = [];
+  const skipped = [];
+  let facts = new Map();
+
+  if (DAE_ONLY) {
+    const dbName = new URL(MYSQL_URL).pathname.replace(/^\//, "");
+    console.log(`\nDAE_ONLY mode — restricting every table to domain ${DOMAIN_ID} / events ${EVENT_IDS.join(", ")}`);
+    facts = await loadTableFacts(mysqlConn, dbName);
+    const scope = await buildScope(mysqlConn);
+    console.log(`  scope: ${scope.listings} listing ids, ${scope.users} user ids`);
+  }
+
   console.log(`\nMigrating ${TABLES.length} tables...\n`);
   for (const table of TABLES) {
+    let where = null;
+    if (DAE_ONLY) {
+      const decision = daeFilterFor(table, facts);
+      if (decision && decision.skip) {
+        console.log(`  ${table}: SKIPPED — ${decision.reason}`);
+        skipped.push(`${table} (${decision.reason})`);
+        continue;
+      }
+      where = decision;
+    }
     try {
-      const result = await migrateTable(mysqlConn, pgPool, table);
+      const result = await migrateTable(mysqlConn, pgPool, table, where);
       summary.push(result);
     } catch (err) {
       console.error(`  ${table}: TABLE FAILED — ${err.message}`);
       summary.push({ table, rows: 0, errors: -1, tableFailed: true });
     }
+  }
+
+  if (DAE_ONLY) {
+    // getDomain() resolves the site's event from this setting, NOT from find_domains.event_id (see
+    // src/lib/services/domain.ts). The legacy MySQL copy has no such row for this domain, so
+    // without writing it the site would fall back to DEFAULT_EVENT_ID (852 — the 2021 event) and
+    // show the wrong show. Production had it set through the CP; recreate that here.
+    const [[existing]] = await mysqlConn.query(
+      "SELECT value FROM find_settings WHERE varname = 'cp_active_event_id' AND `DOMAIN` = ?",
+      [DOMAIN_ID]
+    );
+    const activeEventId = existing ? Number(existing.value) : EVENT_IDS[0];
+    // optioncode_type / optioncode_parse_type are NOT NULL enum columns with no defaults, so they
+    // have to be given explicitly — 'text' / 'static' is what every other scalar setting row in
+    // this table uses (e.g. varname='backup_path').
+    await pgPool.query(
+      `INSERT INTO "find_settings"
+         ("varname", "grouptitle", "value", "optioncode_type", "optioncode_parse_type", "DOMAIN")
+       SELECT 'cp_active_event_id', 'events', $1, 'text', 'static', $2
+       WHERE NOT EXISTS (
+         SELECT 1 FROM "find_settings" WHERE "varname" = 'cp_active_event_id' AND "DOMAIN" = $2
+       )`,
+      [String(activeEventId), DOMAIN_ID]
+    );
+    console.log(`\n  active event setting: cp_active_event_id = ${activeEventId} (domain ${DOMAIN_ID})`);
   }
 
   await mysqlConn.end();
@@ -793,6 +1003,12 @@ async function main() {
   console.log(`Total row-level errors: ${totalErrors}`);
   if (failedTables.length) console.log(`Tables that failed entirely: ${failedTables.join(", ")}`);
   if (tablesWithRowErrors.length) console.log(`Tables with some failed rows: ${tablesWithRowErrors.join(", ")}`);
+  if (skipped.length) {
+    // Stated explicitly rather than left implicit: a subset migration that does not say what it
+    // left behind reads as a complete one.
+    console.log(`\nDeliberately NOT copied (${skipped.length}):`);
+    for (const s of skipped) console.log(`  - ${s}`);
+  }
   if (!failedTables.length && !tablesWithRowErrors.length) console.log("No errors. ✅");
 }
 
