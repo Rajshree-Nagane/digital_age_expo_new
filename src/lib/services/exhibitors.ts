@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { CONTENT_BLOCK_SELECT } from "@/lib/services/contentBlocks";
+import { CACHE_TAGS, cachedRead } from "@/lib/cache";
 import { assetUrl } from "@/lib/assets";
 export type find_event_exhibitor_status = "active" | "inactive" | "pending" | "cancelled" | string;
 
@@ -41,7 +43,7 @@ async function mapExhibitorRows(exhibitors: any[]) {
  * on exhibitors.php (that controller's own find_listings query is unused dead code).
  * Optional zoneId narrows to one exhibition zone (find_event_exhibitor.exhibition_zone_id) —
  * used by the /exhibitors?zone=<id> filter a lobby hotspot's zone dropdown links into. */
-export async function getEventExhibitors(eventId: number, zoneId?: number) {
+async function read_getEventExhibitors(eventId: number, zoneId?: number) {
   const exhibitors = await prisma.find_event_exhibitor.findMany({
     where: { event_id: eventId, status: "active", ...(zoneId ? { exhibition_zone_id: zoneId } : {}) },
     orderBy: { business: "asc" },
@@ -58,7 +60,7 @@ export interface PagedExhibitorsResult {
 }
 
 /** Same data as getEventExhibitors, but paginated for the /exhibitors directory page. */
-export async function getEventExhibitorsPaged(
+async function read_getEventExhibitorsPaged(
   eventId: number,
   page = 1,
   pageSize = 20,
@@ -87,7 +89,7 @@ export async function getEventExhibitorsPaged(
 }
 
 /** The zone's own display name, for the /exhibitors?zone=<id> filtered heading. */
-export async function getExhibitionZoneName(zoneId: number): Promise<string | null> {
+async function read_getExhibitionZoneName(zoneId: number): Promise<string | null> {
   const zone = await prisma.find_event_lobby_child_layout_manager.findUnique({
     where: { id: zoneId },
     select: { title: true },
@@ -148,10 +150,11 @@ export async function deleteExhibitorRegistration(id: number) {
 
 /** Mirrors includes/blocks/why_Join_Event.php — used on why_join_exhibit.php. The row with
  * sequence 0 is the section intro/header; the rest are individual "reason" cards. */
-export async function getWhyJoinExhibitContent(listingId: number | null) {
+async function read_getWhyJoinExhibitContent(listingId: number | null) {
   if (!listingId) return { intro: null as any, reasons: [] as any[] };
 
   const rows = await prisma.find_listing_business_opportunity.findMany({
+    select: CONTENT_BLOCK_SELECT,
     where: { listing_id: listingId, opportunity_intro: "LOSNWJ" },
     orderBy: { sequence: "asc" },
   });
@@ -163,15 +166,17 @@ export async function getWhyJoinExhibitContent(listingId: number | null) {
 
 /** Mirrors includes/blocks/exhibitor_package_include.php + gain_from_exhibitor.php — used on
  * exhibitor-registration.php. */
-export async function getExhibitorRegistrationContent(listingId: number | null) {
+async function read_getExhibitorRegistrationContent(listingId: number | null) {
   if (!listingId) return { packageIncludes: [] as any[], gains: [] as any[] };
 
   const [packageIncludes, gains] = await Promise.all([
     prisma.find_listing_business_opportunity.findMany({
+      select: CONTENT_BLOCK_SELECT,
       where: { listing_id: listingId, opportunity_intro: "LOSNYEPI", domain_page_name: "Exhibitor" },
       orderBy: { sequence: "asc" },
     }),
     prisma.find_listing_business_opportunity.findMany({
+      select: CONTENT_BLOCK_SELECT,
       where: { listing_id: listingId, opportunity_intro: "LOSNWYGFE", domain_page_name: "Exhibitor" },
       orderBy: { sequence: "asc" },
     }),
@@ -183,10 +188,11 @@ export async function getExhibitorRegistrationContent(listingId: number | null) 
 /** Mirrors includes/blocks/view_exhibitor.php — the hero content block used on why_exhibit.php /
  * whyExhibitor.php (also reused with a different domain_page_name on the home page's "book a stand"
  * section, see home.ts's getOpportunityContent). */
-export async function getWhyExhibitHero(listingId: number | null) {
+async function read_getWhyExhibitHero(listingId: number | null) {
   if (!listingId) return null;
 
   return prisma.find_listing_business_opportunity.findFirst({
+    select: CONTENT_BLOCK_SELECT,
     where: { listing_id: listingId, opportunity_intro: "LOSNWHEXH", domain_page_name: "Why Exhibit" },
     orderBy: { sequence: "asc" },
   });
@@ -209,7 +215,7 @@ export interface StandPackagesResult {
 /** Real stand/exhibitor pricing tiers for the "Stands & Packages" page. Mirrors membership_packages.php
  * (and includes/blocks/membership_packages.php): find_products_groups -> find_products (type=
  * 'listing_membership') -> find_products_pricing, scoped to this domain's single product group. */
-export async function getStandPackages(domainId: number): Promise<StandPackagesResult> {
+async function read_getStandPackages(domainId: number): Promise<StandPackagesResult> {
   const DEFAULT_TITLE = "CHOOSE MEMBERSHIP OPTIONS";
 
   const group = await prisma.find_products_groups.findFirst({
@@ -272,7 +278,7 @@ export interface ExhibitorDirectoryEntry {
  * marketing grid on /exhibitors), this also resolves the zone name and about-us blurb the modal
  * actually displays.
  */
-export async function getEventExhibitorDirectory(eventId: number): Promise<ExhibitorDirectoryEntry[]> {
+async function read_getEventExhibitorDirectory(eventId: number): Promise<ExhibitorDirectoryEntry[]> {
   const rows = await prisma.find_event_exhibitor.findMany({
     where: { event_id: eventId, status: "active" },
     orderBy: { business: "asc" },
@@ -333,3 +339,39 @@ export async function getEventExhibitorDirectory(eventId: number): Promise<Exhib
     };
   });
 }
+
+/**
+ * ---------------------------------------------------------------------------
+ *  Cached public reads
+ * ---------------------------------------------------------------------------
+ *
+ *  These wrap the readers above so their results are reused across requests
+ *  instead of re-queried on every page view — see src/lib/cache.ts for why that
+ *  matters here and what is deliberately left uncached (anything per-user or
+ *  organiser-facing, which in this file means the *ForAdmin readers and every
+ *  update/delete path).
+ */
+export const getEventExhibitors = cachedRead(["exhibitors", "getEventExhibitors"], read_getEventExhibitors, {
+  tags: [CACHE_TAGS.exhibitors],
+});
+export const getEventExhibitorsPaged = cachedRead(["exhibitors", "getEventExhibitorsPaged"], read_getEventExhibitorsPaged, {
+  tags: [CACHE_TAGS.exhibitors],
+});
+export const getExhibitionZoneName = cachedRead(["exhibitors", "getExhibitionZoneName"], read_getExhibitionZoneName, {
+  tags: [CACHE_TAGS.exhibitors],
+});
+export const getWhyJoinExhibitContent = cachedRead(["exhibitors", "getWhyJoinExhibitContent"], read_getWhyJoinExhibitContent, {
+  tags: [CACHE_TAGS.exhibitors],
+});
+export const getExhibitorRegistrationContent = cachedRead(["exhibitors", "getExhibitorRegistrationContent"], read_getExhibitorRegistrationContent, {
+  tags: [CACHE_TAGS.exhibitors],
+});
+export const getWhyExhibitHero = cachedRead(["exhibitors", "getWhyExhibitHero"], read_getWhyExhibitHero, {
+  tags: [CACHE_TAGS.exhibitors],
+});
+export const getStandPackages = cachedRead(["exhibitors", "getStandPackages"], read_getStandPackages, {
+  tags: [CACHE_TAGS.exhibitors],
+});
+export const getEventExhibitorDirectory = cachedRead(["exhibitors", "getEventExhibitorDirectory"], read_getEventExhibitorDirectory, {
+  tags: [CACHE_TAGS.exhibitors],
+});

@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { CONTENT_BLOCK_SELECT } from "@/lib/services/contentBlocks";
+import { CACHE_TAGS, cachedRead } from "@/lib/cache";
 export type find_speakers_status = "active" | "inactive" | "pending" | "cancelled" | string;
 
 const SELECT_FIELDS = {
@@ -34,7 +36,7 @@ async function withVisitorCounts<T extends { id: number }>(speakers: T[]) {
 }
 
 /** Mirrors class_eventspeaker.php::getEventSpeakers() */
-export async function getCurrentSpeakers(eventId: number) {
+async function read_getCurrentSpeakers(eventId: number) {
   const speakers = await prisma.find_speakers.findMany({
     where: { event_id: eventId, status: "active", hide_home: { not: 1 }, is_previous_speaker: null },
     orderBy: [{ date: "asc" }, { start_time: "asc" }],
@@ -51,7 +53,7 @@ export interface PagedSpeakersResult {
 }
 
 /** Same list as getCurrentSpeakers, paginated for the /view_speaker directory page. */
-export async function getCurrentSpeakersPaged(eventId: number, page = 1, pageSize = 20): Promise<PagedSpeakersResult> {
+async function read_getCurrentSpeakersPaged(eventId: number, page = 1, pageSize = 20): Promise<PagedSpeakersResult> {
   const safePage = Math.max(1, Math.floor(page) || 1);
   const where = { event_id: eventId, status: "active" as const, hide_home: { not: 1 }, is_previous_speaker: null };
 
@@ -71,7 +73,7 @@ export async function getCurrentSpeakersPaged(eventId: number, page = 1, pageSiz
 }
 
 /** Mirrors class_eventspeaker.php::getEventPreviousSpeakers() */
-export async function getPreviousSpeakers(previousEventId: number, currentEventId: number) {
+async function read_getPreviousSpeakers(previousEventId: number, currentEventId: number) {
   const currentUserIds = await prisma.find_speakers.findMany({
     where: { event_id: currentEventId, is_previous_speaker: null, status: "active", user_id: { not: null } },
     select: { user_id: true },
@@ -92,7 +94,7 @@ export async function getPreviousSpeakers(previousEventId: number, currentEventI
   return withVisitorCounts(speakers);
 }
 
-export async function getSpeakerById(id: number) {
+async function read_getSpeakerById(id: number) {
   const speaker = await prisma.find_speakers.findUnique({
     where: { id },
     select: {
@@ -176,14 +178,43 @@ export async function deleteSpeakerRegistration(id: number) {
 }
 
 /** Content sections for the speakers directory & detail pages (find_listing_business_opportunity). */
-export async function getSpeakerPageContent(listingId: number) {
+async function read_getSpeakerPageContent(listingId: number) {
   const [whySpeaker, bannerContent] = await Promise.all([
     prisma.find_listing_business_opportunity.findFirst({
+      select: CONTENT_BLOCK_SELECT,
       where: { listing_id: listingId, opportunity_intro: "LOSNWHSPK", domain_page_name: "Why Speaker" },
     }),
     prisma.find_listing_business_opportunity.findFirst({
+      select: CONTENT_BLOCK_SELECT,
       where: { listing_id: listingId, opportunity_intro: "LOSNSBANN", domain_page_name: "speaker banner" },
     }),
   ]);
   return { whySpeaker, bannerContent };
 }
+
+/**
+ * ---------------------------------------------------------------------------
+ *  Cached public reads
+ * ---------------------------------------------------------------------------
+ *
+ *  These wrap the readers above so their results are reused across requests
+ *  instead of re-queried on every page view — see src/lib/cache.ts for why that
+ *  matters here and what is deliberately left uncached (anything per-user or
+ *  organiser-facing, which in this file means the *ForAdmin readers and every
+ *  update/delete path).
+ */
+export const getCurrentSpeakers = cachedRead(["speakers", "getCurrentSpeakers"], read_getCurrentSpeakers, {
+  tags: [CACHE_TAGS.speakers],
+});
+export const getCurrentSpeakersPaged = cachedRead(["speakers", "getCurrentSpeakersPaged"], read_getCurrentSpeakersPaged, {
+  tags: [CACHE_TAGS.speakers],
+});
+export const getPreviousSpeakers = cachedRead(["speakers", "getPreviousSpeakers"], read_getPreviousSpeakers, {
+  tags: [CACHE_TAGS.speakers],
+});
+export const getSpeakerById = cachedRead(["speakers", "getSpeakerById"], read_getSpeakerById, {
+  tags: [CACHE_TAGS.speakers],
+});
+export const getSpeakerPageContent = cachedRead(["speakers", "getSpeakerPageContent"], read_getSpeakerPageContent, {
+  tags: [CACHE_TAGS.speakers],
+});

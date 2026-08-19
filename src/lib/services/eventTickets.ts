@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { CACHE_TAGS, cachedRead } from "@/lib/cache";
 import type { EventMemberContext } from "@/lib/services/eventAccess";
 import type { EventTicketInput } from "@/lib/validations/eventTicket";
 
@@ -69,7 +70,7 @@ export async function getEventTickets(context: EventMemberContext): Promise<Even
 
 /** Public read of the active, on-sale ticket tiers for the "Buy Conference Pass" page —
  * no member/organiser context required, unlike getEventTickets above. */
-export async function getActiveEventTickets(eventId: number): Promise<EventTicketRow[]> {
+async function read_getActiveEventTickets(eventId: number): Promise<EventTicketRow[]> {
   const rows = await prisma.find_event_ticket.findMany({
     where: { event_id: eventId, active: true },
     orderBy: [{ sequence: "asc" }, { id: "asc" }],
@@ -128,3 +129,18 @@ export async function deleteEventTicket(context: EventMemberContext, id: number)
   if (context.role !== "organiser") return { count: 0 };
   return prisma.find_event_ticket.deleteMany({ where: { id, event_id: context.eventId } });
 }
+
+/**
+ * ---------------------------------------------------------------------------
+ *  Cached public reads
+ * ---------------------------------------------------------------------------
+ *
+ *  These wrap the readers above so their results are reused across requests
+ *  instead of re-queried on every page view — see src/lib/cache.ts for why that
+ *  matters here and what is deliberately left uncached (anything per-user or
+ *  organiser-facing, which in this file means the *ForAdmin readers and every
+ *  update/delete path).
+ */
+export const getActiveEventTickets = cachedRead(["eventTickets", "getActiveEventTickets"], read_getActiveEventTickets, {
+  tags: [CACHE_TAGS.tickets],
+});

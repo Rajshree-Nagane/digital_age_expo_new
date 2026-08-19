@@ -1,8 +1,25 @@
 import { prisma } from "@/lib/prisma";
+import { CACHE_TAGS, cachedRead } from "@/lib/cache";
 export type find_event_sponsorer_status = "approved" | "pending" | "unapproved";
 
+/**
+ * find_event_sponsorship_setup.price is a `Decimal(10,2)` column, and Prisma returns those as
+ * `Decimal` class instances. Those cannot survive the read cache (see src/lib/cache.ts), so the
+ * tier readers below hand back a plain string instead — the same approach eventTickets.ts already
+ * takes for its own money columns in `toRow`.
+ *
+ * A string, specifically, and not a number: the pages render this as `£{tier.price.toLocaleString()}`,
+ * and `String.prototype.toLocaleString` returns the string unchanged, so the rendered output is
+ * byte-for-byte what it was before. Converting to a number would silently start inserting thousands
+ * separators ("£5,000" where the site previously showed "£5000") — a visible change to live pages,
+ * which is not something a caching fix should smuggle in.
+ */
+function withPriceAsString<T extends { price: unknown }>(row: T): Omit<T, "price"> & { price: string | null } {
+  return { ...row, price: row.price != null ? String(row.price) : null };
+}
+
 /** Mirrors the sponsor query shared by sponsors.php, why-sponsor.php, and the home blocks. */
-export async function getApprovedSponsors(eventId: number) {
+async function read_getApprovedSponsors(eventId: number) {
   const sponsors = await prisma.find_event_sponsorer.findMany({
     where: { event_id: eventId, is_approved: 1, status: "approved" },
     select: {
@@ -55,7 +72,7 @@ export async function getApprovedSponsors(eventId: number) {
 }
 
 /** Sponsorship packages/tiers for sale (find_event_sponsorship_setup), mirrors sponsors.php. */
-export async function getSponsorshipTiers(eventId: number) {
+async function read_getSponsorshipTiers(eventId: number) {
   const tiers = await prisma.find_event_sponsorship_setup.findMany({
     where: { event_id: eventId, active: true },
     orderBy: { display_order: "asc" },
@@ -70,10 +87,10 @@ export async function getSponsorshipTiers(eventId: number) {
       image: true,
     },
   });
-  return tiers.filter((tier: any) => tier.available - tier.used >= 0);
+  return tiers.filter((tier: any) => tier.available - tier.used >= 0).map(withPriceAsString);
 }
 
-export async function getSponsorshipTierById(id: number) {
+async function read_getSponsorshipTierById(id: number) {
   const tier = await prisma.find_event_sponsorship_setup.findUnique({
     where: { id },
     select: {
@@ -113,7 +130,7 @@ export async function getSponsorshipTierById(id: number) {
     standard: benefits.filter((b: any) => b.benefit_type === "standard_benefit"),
   };
 
-  return { tier, benefits: grouped };
+  return { tier: withPriceAsString(tier), benefits: grouped };
 }
 
 export interface AdminSponsor {
@@ -176,3 +193,22 @@ export async function updateSponsorApproval(id: number, decision: "approved" | "
 export async function deleteSponsorRegistration(id: number) {
   return prisma.find_event_sponsorer.delete({ where: { id }, select: { id: true } });
 }
+/**
+ * ---------------------------------------------------------------------------
+ *  Cached public reads
+ * ---------------------------------------------------------------------------
+ *
+ *  See src/lib/cache.ts. The organiser-facing readers (`getSponsorsForAdmin`) and
+ *  the approval/delete write paths are deliberately NOT cached: the first is
+ *  behind a login and shows pending rows an editor is actively working through,
+ *  and caching the second would be meaningless.
+ */
+export const getApprovedSponsors = cachedRead(["sponsors", "getApprovedSponsors"], read_getApprovedSponsors, {
+  tags: [CACHE_TAGS.sponsors],
+});
+export const getSponsorshipTiers = cachedRead(["sponsors", "getSponsorshipTiers"], read_getSponsorshipTiers, {
+  tags: [CACHE_TAGS.sponsors],
+});
+export const getSponsorshipTierById = cachedRead(["sponsors", "getSponsorshipTierById"], read_getSponsorshipTierById, {
+  tags: [CACHE_TAGS.sponsors],
+});

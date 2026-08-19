@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import { CACHE_TAGS, revalidateContent } from "@/lib/cache";
 import { requireCpPermission, CP_PERMISSIONS } from "@/lib/cp/rbac";
 import { setSettings } from "@/lib/cp/settings/settingsRepository";
 import { setActiveEventId } from "@/lib/cp/events/eventsRepository";
@@ -58,6 +59,10 @@ export async function saveGeneralSettingsAction(
       // (which statically caches pages that don't opt out) reflects the new active event
       // immediately, the same fix applied to Events Management's "Mark Active" action.
       revalidatePath("/", "layout");
+      // revalidatePath busts rendered routes only. getDomain() also caches this setting (and the
+      // find_domains row) through cachedRead(), keyed by tag — without this the site would keep
+      // serving the previous active event until that window expired. See src/lib/cache.ts.
+      revalidateContent(CACHE_TAGS.domain, CACHE_TAGS.event);
     }
   }
 

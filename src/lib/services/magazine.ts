@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { CACHE_TAGS, cachedRead } from "@/lib/cache";
 import { assetUrl } from "@/lib/assets";
 
 /**
@@ -27,7 +28,7 @@ export interface MagazinePublication {
 }
 
 /** Mirrors magazine.php: `Select * from find_magazine_publications mp where id=?`. */
-export async function getMagazinePublicationById(id: number): Promise<MagazinePublication | null> {
+async function read_getMagazinePublicationById(id: number): Promise<MagazinePublication | null> {
   const record = await prisma.find_magazine_publications.findUnique({
     where: { id },
     select: {
@@ -53,7 +54,7 @@ export async function getMagazinePublicationById(id: number): Promise<MagazinePu
 }
 
 /** Falls back to the most recent published magazine for the event when no id is given. */
-export async function getLatestMagazinePublication(eventId: number): Promise<MagazinePublication | null> {
+async function read_getLatestMagazinePublication(eventId: number): Promise<MagazinePublication | null> {
   const record = await prisma.find_magazine_publications.findFirst({
     where: { event_id: eventId, publish: 1 },
     orderBy: { id: "desc" },
@@ -78,3 +79,21 @@ export async function getLatestMagazinePublication(eventId: number): Promise<Mag
     issueLink: record.issue_link,
   };
 }
+
+/**
+ * ---------------------------------------------------------------------------
+ *  Cached public reads
+ * ---------------------------------------------------------------------------
+ *
+ *  These wrap the readers above so their results are reused across requests
+ *  instead of re-queried on every page view — see src/lib/cache.ts for why that
+ *  matters here and what is deliberately left uncached (anything per-user or
+ *  organiser-facing, which in this file means the *ForAdmin readers and every
+ *  update/delete path).
+ */
+export const getMagazinePublicationById = cachedRead(["magazine", "getMagazinePublicationById"], read_getMagazinePublicationById, {
+  tags: [CACHE_TAGS.magazine],
+});
+export const getLatestMagazinePublication = cachedRead(["magazine", "getLatestMagazinePublication"], read_getLatestMagazinePublication, {
+  tags: [CACHE_TAGS.magazine],
+});

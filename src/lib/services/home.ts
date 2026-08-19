@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { CONTENT_BLOCK_SELECT } from "@/lib/services/contentBlocks";
 import { getPhrases } from "@/lib/services/language";
 import { getEventById, getEventDateRange } from "@/lib/services/events";
 import { getApprovedSponsors } from "@/lib/services/sponsors";
@@ -37,7 +38,12 @@ async function getCharityPartners(listingId: number) {
   });
 }
 
-const EMPTY_OPPORTUNITY_CONTENT = {
+/**
+ * Exported so callers that guard `getOpportunityContent` against a database outage have a fallback
+ * of exactly the right shape — see src/app/about/page.tsx. Hand-writing a partial object at each
+ * call site drifts from this one as blocks are added.
+ */
+export const EMPTY_OPPORTUNITY_CONTENT = {
   aboutEvent: null as any,
   sponsorHostData: [] as any[],
   exploreEvent: null as any,
@@ -52,24 +58,30 @@ export async function getOpportunityContent(listingId: number) {
   const [aboutEvent, sponsorHostData, exploreEvent, joinFacebook, bookYourStand, topBanner] =
     await Promise.all([
       prisma.find_listing_business_opportunity.findFirst({
+        select: CONTENT_BLOCK_SELECT,
         where: { listing_id: listingId, opportunity_intro: "LOSNABTEV", domain_page_name: "About Events" },
         orderBy: { sequence: "asc" },
       }),
       prisma.find_listing_business_opportunity.findMany({
+        select: CONTENT_BLOCK_SELECT,
         where: { listing_id: listingId, opportunity_intro: "LOSONI", domain_page_name: "Home" },
         orderBy: { sequence: "asc" },
       }),
       prisma.find_listing_business_opportunity.findFirst({
+        select: CONTENT_BLOCK_SELECT,
         where: { listing_id: listingId, domain_page_name: "explore_the_event" },
       }),
       prisma.find_listing_business_opportunity.findFirst({
+        select: CONTENT_BLOCK_SELECT,
         where: { listing_id: listingId, opportunity_intro: "LOSNJUOFG", domain_page_name: "Home" },
       }),
       prisma.find_listing_business_opportunity.findFirst({
+        select: CONTENT_BLOCK_SELECT,
         where: { listing_id: listingId, opportunity_intro: "LOSNWHEXH", domain_page_name: "book_your_stand" },
         orderBy: { sequence: "asc" },
       }),
       prisma.find_listing_business_opportunity.findFirst({
+        select: CONTENT_BLOCK_SELECT,
         where: { listing_id: listingId, domain_page_name: "dae_index_topbanner" },
       }),
     ]);

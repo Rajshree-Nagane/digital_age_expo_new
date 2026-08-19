@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { CACHE_TAGS, revalidateContent } from "@/lib/cache";
 import { redirect } from "next/navigation";
 import { requireCpPermission, CP_PERMISSIONS } from "@/lib/cp/rbac";
 import { updateEventCore, setEventStatus, duplicateEvent, setActiveEventId } from "@/lib/cp/events/eventsRepository";
@@ -41,6 +42,9 @@ export async function updateEventAction(eventId: number, formData: FormData): Pr
 
   revalidatePath("/cp/events");
   revalidatePath(`/cp/events/${eventId}`);
+  // revalidatePath only busts rendered routes; the public site also reads this event through
+  // cachedRead() in src/lib/services/events.ts, which is keyed by tag. See src/lib/cache.ts.
+  revalidateContent(CACHE_TAGS.event);
 }
 
 export async function setEventStatusAction(eventId: number, formData: FormData): Promise<void> {
@@ -48,6 +52,7 @@ export async function setEventStatusAction(eventId: number, formData: FormData):
   await setEventStatus(eventId, String(formData.get("status") ?? ""));
   revalidatePath("/cp/events");
   revalidatePath(`/cp/events/${eventId}`);
+  revalidateContent(CACHE_TAGS.event);
 }
 
 export async function duplicateEventAction(
@@ -75,6 +80,7 @@ export async function duplicateEventAction(
   });
 
   revalidatePath("/cp/events");
+  revalidateContent(CACHE_TAGS.event);
   redirect(`/cp/events/${newEvent.id}`);
 }
 
@@ -88,4 +94,8 @@ export async function setActiveEventAction(eventId: number): Promise<void> {
   // production build (which statically caches pages that don't opt out) picks up the new
   // active event immediately instead of waiting for its own natural revalidation.
   revalidatePath("/", "layout");
+  // ...and the tag-keyed entries behind getDomain(), which caches BOTH the active-event setting
+  // and the find_domains row. Without this the whole site would keep serving the previous
+  // active event until the revalidate window expired, making "Mark Active" look like a no-op.
+  revalidateContent(CACHE_TAGS.domain, CACHE_TAGS.event);
 }

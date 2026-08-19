@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { CACHE_TAGS, cachedRead } from "@/lib/cache";
 import { getEventDateRange } from "@/lib/services/events";
 
 function dateKey(date: Date): string {
@@ -129,7 +130,7 @@ async function resolveSpeakers(speakerIds: number[]): Promise<Map<number, Speake
 }
 
 /** Mirrors class_eventspeaker.php::getAllSpeakerSchedule() — the full event agenda. */
-export async function getEventSchedule(eventId: number): Promise<ScheduleDay[]> {
+async function read_getEventSchedule(eventId: number): Promise<ScheduleDay[]> {
   const rawItems = await prisma.find_event_lobby_agenda_items.findMany({
     where: { event_id: eventId, speaker_id: { not: null } },
     orderBy: [{ session_date: "asc" }, { agenda_id: "asc" }, { start_date_time: "asc" }],
@@ -171,7 +172,7 @@ export interface AgendaVenueOption {
 
 /** Active venues/agendas for an event — used to populate the speaker questionnaire's venue picker
  * with real find_event_lobby_agenda rows instead of a hardcoded list. */
-export async function getActiveAgendaVenues(eventId: number): Promise<AgendaVenueOption[]> {
+async function read_getActiveAgendaVenues(eventId: number): Promise<AgendaVenueOption[]> {
   return prisma.find_event_lobby_agenda.findMany({
     where: { event_id: eventId, status: "active" },
     orderBy: { title: "asc" },
@@ -181,7 +182,7 @@ export async function getActiveAgendaVenues(eventId: number): Promise<AgendaVenu
 
 /** The event's day-by-day date options (dd/mm/yyyy, matching legacy's date('d/m/Y') format)
  * for use in date pickers such as the speaker questionnaire's "preferred date" selector. */
-export async function getEventDateOptions(eventId: number): Promise<string[]> {
+async function read_getEventDateOptions(eventId: number): Promise<string[]> {
   const range = await getEventDateRange(eventId);
   if (!range) return [];
   return datesInRange(range.date_start, range.date_end).map((key) => {
@@ -191,7 +192,7 @@ export async function getEventDateOptions(eventId: number): Promise<string[]> {
 }
 
 /** Mirrors class_eventspeaker.php::getSpeakerSchedule() — one speaker's own session slots. */
-export async function getSpeakerScheduleSlots(speakerId: number, eventId: number): Promise<ScheduleDay[]> {
+async function read_getSpeakerScheduleSlots(speakerId: number, eventId: number): Promise<ScheduleDay[]> {
   const items = await prisma.find_event_lobby_agenda_items.findMany({
     where: { speaker_id: speakerId },
     orderBy: { start_date_time: "asc" },
@@ -222,3 +223,27 @@ export async function getSpeakerScheduleSlots(speakerId: number, eventId: number
 
   return groupIntoDays(items, agendaTitleById, speakerById, orderedDates);
 }
+
+/**
+ * ---------------------------------------------------------------------------
+ *  Cached public reads
+ * ---------------------------------------------------------------------------
+ *
+ *  These wrap the readers above so their results are reused across requests
+ *  instead of re-queried on every page view — see src/lib/cache.ts for why that
+ *  matters here and what is deliberately left uncached (anything per-user or
+ *  organiser-facing, which in this file means the *ForAdmin readers and every
+ *  update/delete path).
+ */
+export const getEventSchedule = cachedRead(["schedule", "getEventSchedule"], read_getEventSchedule, {
+  tags: [CACHE_TAGS.schedule],
+});
+export const getActiveAgendaVenues = cachedRead(["schedule", "getActiveAgendaVenues"], read_getActiveAgendaVenues, {
+  tags: [CACHE_TAGS.schedule],
+});
+export const getEventDateOptions = cachedRead(["schedule", "getEventDateOptions"], read_getEventDateOptions, {
+  tags: [CACHE_TAGS.schedule],
+});
+export const getSpeakerScheduleSlots = cachedRead(["schedule", "getSpeakerScheduleSlots"], read_getSpeakerScheduleSlots, {
+  tags: [CACHE_TAGS.schedule, CACHE_TAGS.speakers],
+});
