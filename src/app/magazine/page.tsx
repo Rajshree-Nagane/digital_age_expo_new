@@ -1,4 +1,6 @@
 import { getDomain } from "@/lib/services/domain";
+import { createOutageCollector } from "@/lib/db-errors";
+import { DatabaseOutageNotice } from "@/components/common/DatabaseOutageNotice";
 import {
   getMagazinePublicationById,
   getLatestMagazinePublication,
@@ -29,11 +31,23 @@ export default async function MagazinePage({ searchParams }: Props) {
 
   const requestedId = id ? Number(id) : NaN;
 
+  // Guarded so a database refusing service (plan quota, asleep, pool exhausted) degrades
+  // instead of 500-ing this route — see src/lib/db-errors.ts. Keep the collector object intact:
+  // `current` is a getter, so destructuring would snapshot the still-null value.
+  const collector = createOutageCollector();
+  const guard = collector.guard;
+
   const publication = Number.isFinite(requestedId)
-    ? await getMagazinePublicationById(requestedId)
+    ? await guard(() => getMagazinePublicationById(requestedId), null)
     : domain.event_id
-      ? await getLatestMagazinePublication(domain.event_id)
+      ? await guard(() => getLatestMagazinePublication(domain.event_id), null)
       : null;
+
+  // No issue found *because* the database refused the query — say that instead of rendering the
+  // page with dead download buttons.
+  if (!publication && collector.current) {
+    return <DatabaseOutageNotice outage={collector.current} />;
+  }
 
   const readOnlineHref =
     publication?.issueLink || publication?.pdfUrl || undefined;

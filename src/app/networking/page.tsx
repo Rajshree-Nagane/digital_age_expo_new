@@ -1,4 +1,5 @@
 import { getDomain } from "@/lib/services/domain";
+import { createOutageCollector } from "@/lib/db-errors";
 import { getEventById } from "@/lib/services/events";
 import { getEventSchedule } from "@/lib/services/schedule";
 import { EventDaysTabSection } from "@/components/events/EventDaysTabSection";
@@ -11,8 +12,14 @@ export const metadata = {
 
 export default async function NetworkingPage() {
   const domain = await getDomain();
-  const event = domain.event_id ? await getEventById(domain.event_id) : null;
-  const days = event ? await getEventSchedule(event.id) : [];
+  // Guarded so a database refusing service (plan quota, asleep, pool exhausted) degrades
+  // instead of 500-ing this route — see src/lib/db-errors.ts. Keep the collector object intact:
+  // `current` is a getter, so destructuring would snapshot the still-null value.
+  const collector = createOutageCollector();
+  const guard = collector.guard;
+
+  const event = domain.event_id ? await guard(() => getEventById(domain.event_id), null) : null;
+  const days = event ? await guard(() => getEventSchedule(event.id), []) : [];
 
   return (
     <div className="w-full bg-slate-950 text-white min-h-screen">

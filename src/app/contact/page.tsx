@@ -1,4 +1,5 @@
 import { getDomain } from "@/lib/services/domain";
+import { createOutageCollector } from "@/lib/db-errors";
 import { getEventById } from "@/lib/services/events";
 import { ContactForm } from "@/components/contact/ContactForm";
 import Image from "next/image";
@@ -19,7 +20,13 @@ export const metadata = {
  */
 export default async function ContactPage() {
   const domain = await getDomain();
-  const event = domain.event_id ? await getEventById(domain.event_id) : null;
+  // Guarded so a database refusing service (plan quota, asleep, pool exhausted) degrades
+  // instead of 500-ing this route — see src/lib/db-errors.ts. Keep the collector object intact:
+  // `current` is a getter, so destructuring would snapshot the still-null value.
+  const collector = createOutageCollector();
+  const guard = collector.guard;
+
+  const event = domain.event_id ? await guard(() => getEventById(domain.event_id), null) : null;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-zinc-950 text-white">

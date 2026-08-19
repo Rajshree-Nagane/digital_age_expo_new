@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { getDomain } from "@/lib/services/domain";
+import { createOutageCollector } from "@/lib/db-errors";
+import { DatabaseOutageNotice } from "@/components/common/DatabaseOutageNotice";
 import { getEventById } from "@/lib/services/events";
 import { getApprovedSponsors, getSponsorshipTiers } from "@/lib/services/sponsors";
 import { SponsorsGrid } from "@/components/sponsors/SponsorsGrid";
@@ -15,12 +17,24 @@ export const metadata = {
 
 export default async function SponsorsPage() {
   const domain = await getDomain();
-  const event = domain.event_id ? await getEventById(domain.event_id) : null;
+
+  // Guarded so a database refusing service (plan quota, asleep, pool exhausted) degrades
+  // instead of 500-ing this route — see src/lib/db-errors.ts. Keep the collector object intact:
+  // `current` is a getter, so destructuring would snapshot the still-null value.
+  const collector = createOutageCollector();
+  const guard = collector.guard;
+
+  const event = domain.event_id ? await guard(() => getEventById(domain.event_id), null) : null;
 
   const [sponsors, tiers] = await Promise.all([
-    event ? getApprovedSponsors(event.id) : [],
-    event ? getSponsorshipTiers(event.id) : [],
+    event ? guard(() => getApprovedSponsors(event.id), [] as any[]) : [],
+    event ? guard(() => getSponsorshipTiers(event.id), [] as any[]) : [],
   ]);
+
+  // Nothing loaded and the database is why — don't imply the event has no sponsors.
+  if (sponsors.length === 0 && tiers.length === 0 && collector.current) {
+    return <DatabaseOutageNotice outage={collector.current} />;
+  }
 
   return (
     <div className="w-full bg-slate-950 text-white min-h-screen pb-20">

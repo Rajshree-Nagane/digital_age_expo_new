@@ -1,8 +1,10 @@
 import { getDomain } from "@/lib/services/domain";
 import { getEventById, getEventDateRange } from "@/lib/services/events";
-import { getOpportunityContent } from "@/lib/services/home";
+import { EMPTY_OPPORTUNITY_CONTENT, getOpportunityContent } from "@/lib/services/home";
 import { AboutEvent } from "@/components/home/AboutEvent";
 import { SponsorHostGrid } from "@/components/home/SponsorHostGrid";
+import { createOutageCollector } from "@/lib/db-errors";
+import { DatabaseOutageNotice } from "@/components/common/DatabaseOutageNotice";
 
 export const metadata = {
   title: "About The Event",
@@ -10,11 +12,26 @@ export const metadata = {
 
 export default async function AboutPage() {
   const domain = await getDomain();
-  const event = domain.event_id ? await getEventById(domain.event_id) : null;
-  const eventDates = domain.event_id ? await getEventDateRange(domain.event_id) : null;
+
+  // See src/lib/db-errors.ts: guarded so an infrastructure-level database failure degrades instead
+  // of 500-ing the route. Keep the collector object intact — `current` is a getter.
+  const collector = createOutageCollector();
+  const guard = collector.guard;
+
+  const event = domain.event_id ? await guard(() => getEventById(domain.event_id), null) : null;
+  const eventDates = domain.event_id ? await guard(() => getEventDateRange(domain.event_id), null) : null;
   const { aboutEvent, sponsorHostData } = domain.linked_profile_listing_id
-    ? await getOpportunityContent(domain.linked_profile_listing_id)
-    : { aboutEvent: null, sponsorHostData: [] };
+    ? await guard(
+        () => getOpportunityContent(domain.linked_profile_listing_id!),
+        EMPTY_OPPORTUNITY_CONTENT
+      )
+    : EMPTY_OPPORTUNITY_CONTENT;
+
+  // The event could not be read *because* the database refused the query — don't claim no event is
+  // configured, which sends the reader looking for a settings problem that doesn't exist.
+  if (!event && collector.current) {
+    return <DatabaseOutageNotice outage={collector.current} />;
+  }
 
   if (!event) {
     return (

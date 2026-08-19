@@ -1,6 +1,8 @@
 import { getDomain } from "@/lib/services/domain";
+import { createOutageCollector } from "@/lib/db-errors";
+import { DatabaseOutageNotice } from "@/components/common/DatabaseOutageNotice";
 import { getListingFaqs } from "@/lib/services/faq";
-import { FaqPageContent } from "./FaqPageContent";
+import { FaqPageContent, type FAQQuestion } from "./FaqPageContent";
 
 /**
  * SERVER COMPONENT — do not add "use client" to this file.
@@ -27,7 +29,18 @@ export default async function FrequentlyAskedQuestionsPage() {
   const listingId =
     domain.faq_listing_id ?? FALLBACK_FAQ_LISTING_ID;
 
-  const faqGroups = await getListingFaqs(listingId);
+  // Guarded so a database refusing service (plan quota, asleep, pool exhausted) degrades
+  // instead of 500-ing this route — see src/lib/db-errors.ts. Keep the collector object intact:
+  // `current` is a getter, so destructuring would snapshot the still-null value.
+  const collector = createOutageCollector();
+  const guard = collector.guard;
+
+  const faqGroups = await guard(() => getListingFaqs(listingId), []);
+
+  // The FAQs ARE this page.
+  if (faqGroups.length === 0 && collector.current) {
+    return <DatabaseOutageNotice outage={collector.current} />;
+  }
 
   /*
    * Flatten all FAQ groups into one list.
@@ -35,16 +48,20 @@ export default async function FrequentlyAskedQuestionsPage() {
    * This allows us to show exactly 10 questions initially,
    * regardless of how many questions exist in each group.
    */
-  const allQuestions = faqGroups.flatMap((group: any, groupIndex: number) =>
-    (group.items || []).map((item: any, itemIndex: number) => ({
-      ...item,
-      groupTitle:
-        group.title ||
-        group.name ||
-        "Frequently Asked Questions",
-      uniqueId:
-        item.id ??
-        `${groupIndex}-${itemIndex}`,
+  /*
+   * NB: the field names here must match getListingFaqs()'s FaqGroup — `group.faqs` and
+   * `group.area`, and `response` for the answer body. This previously read `group.items`,
+   * `group.title` and `group.name`, none of which exist on FaqGroup, so `allQuestions` was always
+   * empty and the page rendered "No Questions Available" even with 196 FAQ rows in the database.
+   * Both sides were annotated `any`, which is why the compiler never flagged it — hence the real
+   * types below.
+   */
+  const allQuestions: FAQQuestion[] = faqGroups.flatMap((group, groupIndex) =>
+    group.faqs.map((faq, faqIndex) => ({
+      uniqueId: faq.id ?? `${groupIndex}-${faqIndex}`,
+      groupTitle: group.area || "Frequently Asked Questions",
+      question: faq.question,
+      answer: faq.response,
     }))
   );
 

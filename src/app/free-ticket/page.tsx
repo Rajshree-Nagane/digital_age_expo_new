@@ -1,4 +1,5 @@
 import { getDomain } from "@/lib/services/domain";
+import { createOutageCollector } from "@/lib/db-errors";
 import { getEventById } from "@/lib/services/events";
 import { formatDateLocation } from "@/lib/format";
 import { FreeTicketForm } from "@/components/free-ticket/FreeTicketForm";
@@ -11,7 +12,13 @@ export const metadata = {
 
 export default async function FreeTicketPage() {
   const domain = await getDomain();
-  const event = domain.event_id ? await getEventById(domain.event_id) : null;
+  // Guarded so a database refusing service (plan quota, asleep, pool exhausted) degrades
+  // instead of 500-ing this route — see src/lib/db-errors.ts. Keep the collector object intact:
+  // `current` is a getter, so destructuring would snapshot the still-null value.
+  const collector = createOutageCollector();
+  const guard = collector.guard;
+
+  const event = domain.event_id ? await guard(() => getEventById(domain.event_id), null) : null;
 
   return (
     <div className="bg-slate-950 text-white min-h-screen pb-20">

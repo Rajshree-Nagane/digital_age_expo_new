@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { getDomain } from "@/lib/services/domain";
+import { createOutageCollector } from "@/lib/db-errors";
 import { getWhyExhibitHero } from "@/lib/services/exhibitors";
 import { staticAssetUrl } from "@/lib/assets";
 
@@ -19,7 +20,13 @@ export const metadata = {
 
 export default async function WhyExhibitPage() {
   const domain = await getDomain();
-  const hero = await getWhyExhibitHero(domain.linked_profile_listing_id);
+  // Guarded so a database refusing service (plan quota, asleep, pool exhausted) degrades
+  // instead of 500-ing this route — see src/lib/db-errors.ts. Keep the collector object intact:
+  // `current` is a getter, so destructuring would snapshot the still-null value.
+  const collector = createOutageCollector();
+  const guard = collector.guard;
+
+  const hero = await guard(() => getWhyExhibitHero(domain.linked_profile_listing_id), null);
 
   const heroTitle = hero?.section_title || "Exhibit?";
   const heroSubtitle = hero?.section_description;
