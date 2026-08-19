@@ -1,0 +1,17 @@
+[
+  {
+    "sourceUrl": "https://digitalageexpo.com/images/get_ticket.mp4",
+    "error": "https://tradeshowslocal.com/images/get_ticket.mp4 -> HTTP 525",
+    "table": null,
+    "recordId": null,
+    "field": null,
+    "file": "src/components/home/GetFreeTicket.tsx",
+    "line": 21,
+    "attemptedUrls": [
+      "https://digitalageexpo.com/images/get_ticket.mp4",
+      "https://apps.digitalageexpo.com/images/get_ticket.mp4",
+      "https://findusonweb.com/images/get_ticket.mp4",
+      "https://tradeshowslocal.com/images/get_ticket.mp4"
+    ]
+  }
+]

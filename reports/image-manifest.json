@@ -1,0 +1,278 @@
+[
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/lobby/event_47.mp4?revision=4aa25b9fb8b4163cbe17606b34b74288",
+    "localPath": "/images/event_47.mp4",
+    "status": "mapped-existing",
+    "source": "digitalageexpo.com",
+    "bytes": 3228738,
+    "sha256": "a97f429b13df9813a4c0ef2219efbfcf9401f6ea85d38a8df524f22ee41feeb8",
+    "contentType": "video/mp4",
+    "mappedTo": "/images/event_47.mp4",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/listing_pages/818073-exhibition.png",
+    "localPath": "/images/exhibition.png",
+    "status": "mapped-existing",
+    "source": "digitalageexpo.com",
+    "bytes": 1412970,
+    "sha256": "ad3d09584b4b64434ddea6655e3f22893342c71d5f13d2e2b99e0be6a76cd25b",
+    "contentType": "image/png",
+    "mappedTo": "/images/exhibition.png",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/listing_pages/817601-exhibitor_2.jpg",
+    "localPath": "/images/exhibitor_2.jpg",
+    "status": "mapped-existing",
+    "source": "digitalageexpo.com",
+    "bytes": 172593,
+    "sha256": "3e668bff4f4e04d238147c704260f49401a2bc60df09ca932aea5adcd0cb8761",
+    "contentType": "image/jpeg",
+    "mappedTo": "/images/exhibitor_2.jpg",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/listing_pages/817601-exhibitor.jpg",
+    "localPath": "/images/exhibitor.jpg",
+    "status": "mapped-existing",
+    "source": "digitalageexpo.com",
+    "bytes": 148944,
+    "sha256": "cde6678cf07e30c384634a074342cbdb217d8d99e66987f7e2c501c3e0caa799",
+    "contentType": "image/jpeg",
+    "mappedTo": "/images/exhibitor.jpg",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/buy_ticket_banner1.jpg",
+    "localPath": "/images/external/buy_ticket_banner1.jpg",
+    "status": "downloaded",
+    "source": "digitalageexpo.com",
+    "bytes": 120507,
+    "sha256": "88024d5417db228d70f102d72feafd4b94188f7df0ff41bdb7a0a9294fa3a373",
+    "contentType": "image/jpeg",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://findusonweb.com/files/listing_pages/817601-27972070586_73eb8ef975_o (1).jpg",
+    "localPath": "/images/external/buy_ticket_banner1.jpg",
+    "status": "mapped-existing",
+    "source": "findusonweb.com",
+    "bytes": 120507,
+    "sha256": "88024d5417db228d70f102d72feafd4b94188f7df0ff41bdb7a0a9294fa3a373",
+    "contentType": "image/jpeg",
+    "mappedTo": "/images/external/buy_ticket_banner1.jpg",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://findusonweb.com/files/listing_pages/817601-05_INTRO_OK-1.mp4",
+    "localPath": "/images/external/listing_pages/817601-05_INTRO_OK-1.mp4",
+    "status": "downloaded",
+    "source": "findusonweb.com",
+    "bytes": 15883987,
+    "sha256": "5d5aa77b961d0609e7521d46e3613169eb48361202f7dc06c191451b12636a07",
+    "contentType": "video/mp4",
+    "references": 2
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/listing_pages/817601-backgr.jpg",
+    "localPath": "/images/external/listing_pages/817601-backgr.jpg",
+    "status": "downloaded",
+    "source": "digitalageexpo.com",
+    "bytes": 48133,
+    "sha256": "5a26441ff9ee211016cf27fc31917beea6bd66e19f417c96b2217f855149ef05",
+    "contentType": "image/jpeg",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/listing_pages/817601-book_seat_img.jpg",
+    "localPath": "/images/external/listing_pages/817601-book_seat_img.jpg",
+    "status": "downloaded",
+    "source": "digitalageexpo.com",
+    "bytes": 287534,
+    "sha256": "d7d6625d15da7d12ecb65d0f9b34ea7fbcac3c1196334f89713f9a315423f803",
+    "contentType": "image/jpeg",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/listing_pages/817601-cta_img.jpg",
+    "localPath": "/images/external/listing_pages/817601-cta_img.jpg",
+    "status": "downloaded",
+    "source": "digitalageexpo.com",
+    "bytes": 162297,
+    "sha256": "d78fe9867b4a66204898adc74737bbd6cb88d69dbbc26a2e000812f972419060",
+    "contentType": "image/jpeg",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/listing_pages/817601-exibitor.png",
+    "localPath": "/images/external/listing_pages/817601-exibitor.png",
+    "status": "downloaded",
+    "source": "digitalageexpo.com",
+    "bytes": 970363,
+    "sha256": "98006c0c44479e55abebd07d445b4c7f0f183afde87e855b2c9c9f4640e564ae",
+    "contentType": "image/png",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/listing_pages/817601-fb_grp_1.png",
+    "localPath": "/images/external/listing_pages/817601-fb_grp_1.png",
+    "status": "downloaded",
+    "source": "digitalageexpo.com",
+    "bytes": 690041,
+    "sha256": "1011ef6aaa58bcce528a35cdfa5603a8151f5238b296f493c6f38e2aa1d89a2f",
+    "contentType": "image/png",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/listing_pages/817601-fb_grp_2.png",
+    "localPath": "/images/external/listing_pages/817601-fb_grp_2.png",
+    "status": "downloaded",
+    "source": "digitalageexpo.com",
+    "bytes": 151222,
+    "sha256": "e1cafe8f07b127125a9d515399348fbdfdc5951124344c690e5b0524d87b7f98",
+    "contentType": "image/png",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/listing_pages/818073-dae_index_top_banner.jpg",
+    "localPath": "/images/external/listing_pages/818073-dae_index_top_banner.jpg",
+    "status": "downloaded",
+    "source": "digitalageexpo.com",
+    "bytes": 70931,
+    "sha256": "771aacac355ce140d3e9fa9f931aaff8eb2dd3c3fd7ccef55413ae597ebc1915",
+    "contentType": "image/jpeg",
+    "references": 9
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/listing_pages/817601-banner1.jpg",
+    "localPath": "/images/external/listing_pages/818073-dae_index_top_banner.jpg",
+    "status": "mapped-existing",
+    "source": "digitalageexpo.com",
+    "bytes": 70931,
+    "sha256": "771aacac355ce140d3e9fa9f931aaff8eb2dd3c3fd7ccef55413ae597ebc1915",
+    "contentType": "image/jpeg",
+    "mappedTo": "/images/external/listing_pages/818073-dae_index_top_banner.jpg",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/lobby/child/event_1473.png",
+    "localPath": "/images/external/lobby/child/event_1473.png",
+    "status": "downloaded",
+    "source": "digitalageexpo.com",
+    "bytes": 198707,
+    "sha256": "ae38fb7190e10841d3c56613cb6a412834de97bbb6d2b9f837887d4897410fd6",
+    "contentType": "image/png",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/lobby/child/event_1495.png",
+    "localPath": "/images/external/lobby/child/event_1495.png",
+    "status": "downloaded",
+    "source": "digitalageexpo.com",
+    "bytes": 248019,
+    "sha256": "06fd1bf526bd7f11d2a5922b620ee7e20f45bc12e504fab2a0638ba7f1b5ccf3",
+    "contentType": "image/png",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/lobby/child/event_1496.png",
+    "localPath": "/images/external/lobby/child/event_1496.png",
+    "status": "downloaded",
+    "source": "digitalageexpo.com",
+    "bytes": 1903647,
+    "sha256": "d8049ffb4f25cb2824e2089933fb0f651de05c9e1930b29223ae6b1ce896ba40",
+    "contentType": "image/png",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/lobby/child/event_1497.png",
+    "localPath": "/images/external/lobby/child/event_1497.png",
+    "status": "downloaded",
+    "source": "digitalageexpo.com",
+    "bytes": 1904635,
+    "sha256": "ded97418af1347b0a195fcc54f1f46ed711565d16c62ac21e545151f724efdbd",
+    "contentType": "image/png",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/lobby/child/event_1498.png",
+    "localPath": "/images/external/lobby/child/event_1498.png",
+    "status": "downloaded",
+    "source": "digitalageexpo.com",
+    "bytes": 750474,
+    "sha256": "d74baa10a6fcf3c68d633894ba69f20b747bef5e590ab8f82b93fb56a4355a09",
+    "contentType": "image/png",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/lobby/child/event_327.jpg",
+    "localPath": "/images/external/lobby/child/event_327.jpg",
+    "status": "downloaded",
+    "source": "digitalageexpo.com",
+    "bytes": 559808,
+    "sha256": "18cf90a3744a18d970b5ebce7f529c8020db1d3d3ca0856050d412f1e961c850",
+    "contentType": "image/jpeg",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/lobby/child/event_708.png",
+    "localPath": "/images/external/lobby/child/event_708.png",
+    "status": "downloaded",
+    "source": "digitalageexpo.com",
+    "bytes": 645037,
+    "sha256": "35e0a87c388378546be1d19c5fa7a0d792cac1680a52841afec6d1c2101f9511",
+    "contentType": "image/png",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/images/croped_hurry.jpg",
+    "localPath": "/images/external/site/croped_hurry.jpg",
+    "status": "downloaded",
+    "source": "digitalageexpo.com",
+    "bytes": 134081,
+    "sha256": "73b1fd548617a031ab2b6afbbe62697b5251414429da80847f2fe150066e7cdd",
+    "contentType": "image/jpeg",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/images/maxresdefault.jpg",
+    "localPath": "/images/external/site/maxresdefault.jpg",
+    "status": "downloaded",
+    "source": "digitalageexpo.com",
+    "bytes": 106797,
+    "sha256": "550d66f4d67ca4710ecd15b419e11fde6d620573837885fa484238ab72033f05",
+    "contentType": "image/jpeg",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://apps.digitalageexpo.com/images/speaker_hall.png",
+    "localPath": "/images/speaker_hall.png",
+    "status": "mapped-existing",
+    "source": "apps.digitalageexpo.com",
+    "bytes": 1689630,
+    "sha256": "1c215da55a942c0778a43d8e45df2e077bbfbb64a684ab273281d529b202c454",
+    "contentType": "image/png",
+    "mappedTo": "/images/speaker_hall.png",
+    "references": 2
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/files/listing_pages/817601-tillu_white.png",
+    "localPath": "/images/tillu_white.png",
+    "status": "mapped-existing",
+    "source": "digitalageexpo.com",
+    "bytes": 3455,
+    "sha256": "2fccfeaf22f112b14146315ab2ef3b24f58596a85a1a0fce9a9420e011cbebb1",
+    "contentType": "image/png",
+    "mappedTo": "/images/tillu_white.png",
+    "references": 1
+  },
+  {
+    "sourceUrl": "https://digitalageexpo.com/images/get_ticket.mp4",
+    "localPath": null,
+    "status": "failed",
+    "source": "digitalageexpo.com",
+    "error": "https://digitalageexpo.com/images/get_ticket.mp4 -> Too large (67181163 bytes > --max-bytes 52428800) | https://apps.digitalageexpo.com/images/get_ticket.mp4 -> Server returned an HTML page, not an image (Content-Type: text/html; charset=utf-8) | https://findusonweb.com/images/get_ticket.mp4 -> Too large (67181163 bytes > --max-bytes 52428800) | https://tradeshowslocal.com/images/get_ticket.mp4 -> HTTP 525",
+    "references": 2
+  }
+]
