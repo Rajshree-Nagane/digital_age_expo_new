@@ -123,6 +123,23 @@ const OPT = {
   skipVideo: flags.get("skip-video") === "true",
   fullScan: flags.get("full-scan") === "true",
   noDb: flags.get("no-db") === "true",
+  /**
+   * `--tables=a,b,c` — restrict the DATABASE scan to these tables.
+   *
+   * The default hint-based scan covers 163 columns and surfaces ~13,000 assets across the whole
+   * legacy media library: speaker portraits and sponsor logos that the public site renders, but
+   * also 120 magazine rate cards, 331 sponsorship-category icons and a long tail of things nothing
+   * reads. Mirroring all of it is gigabytes committed to git for no benefit.
+   *
+   * This narrows the scan to the tables whose media actually reaches a page, so the mirror stays
+   * proportionate. Source-code references are unaffected — those are always scanned.
+   */
+  tables: new Set(
+    String(flags.get("tables") ?? "")
+      .split(",")
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean),
+  ),
   force: flags.get("force") === "true",
   confirm: flags.get("confirm") === "true",
   quiet: flags.get("quiet") === "true",
@@ -352,11 +369,16 @@ async function scanDatabase(): Promise<{ refs: Reference[]; scannedColumns: numb
     const pkByTable = new Map<string, string>();
     for (const r of pkRows) if (!pkByTable.has(r.table_name)) pkByTable.set(r.table_name, r.column_name);
 
-    const candidates = columns.filter((c: any) =>
-      OPT.fullScan || IMAGE_COLUMN_HINTS.some((h) => c.column_name.toLowerCase().includes(h)),
+    const candidates = columns.filter(
+      (c: any) =>
+        (OPT.fullScan || IMAGE_COLUMN_HINTS.some((h) => c.column_name.toLowerCase().includes(h))) &&
+        (OPT.tables.size === 0 || OPT.tables.has(String(c.table_name).toLowerCase())),
     );
 
-    log(`  scanning ${candidates.length} candidate column(s) across ${new Set(candidates.map((c: any) => c.table_name)).size} table(s)${OPT.fullScan ? " [FULL SCAN]" : ""}`);
+    log(
+      `  scanning ${candidates.length} candidate column(s) across ${new Set(candidates.map((c: any) => c.table_name)).size} table(s)` +
+        `${OPT.fullScan ? " [FULL SCAN]" : ""}${OPT.tables.size ? ` [tables: ${[...OPT.tables].join(", ")}]` : ""}`,
+    );
 
     for (const col of candidates) {
       const table = col.table_name as string;
