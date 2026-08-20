@@ -23,6 +23,16 @@ interface NavbarProps {
   menu: MenuItem[];
   domainName: string;
   session: any;
+  /**
+   * The announcement bar's event line, resolved from the database by Header.
+   *
+   * Previously the bar hardcoded "DAE 2026" and "London Grand Center • October 12-14, 2026",
+   * which contradicted the event every other part of the site rendered from find_events
+   * ("26 to 28 August 2026, Online Virtual Event"). A visitor saw two different shows in the
+   * same viewport. Null when no event resolves — the bar then renders without the event line
+   * rather than asserting something untrue.
+   */
+  eventBar?: { badge: string; detail: string } | null;
 }
 
 /* =====================================================
@@ -295,6 +305,7 @@ export function Navbar({
   menu,
   domainName,
   session,
+  eventBar = null,
 }: NavbarProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [openMobileSubmenu, setOpenMobileSubmenu] =
@@ -320,13 +331,15 @@ export function Navbar({
 
         {/* Left Side */}
         <div className="flex min-w-0 items-center gap-2">
-          <span className="shrink-0 rounded-full bg-white/20 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider">
-            DAE 2026
-          </span>
+          {eventBar && (
+            <>
+              <span className="shrink-0 rounded-full bg-white/20 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider">
+                {eventBar.badge}
+              </span>
 
-          <span className="hidden truncate text-[11px] sm:inline">
-            London Grand Center • October 12-14, 2026
-          </span>
+              <span className="hidden truncate text-[11px] sm:inline">{eventBar.detail}</span>
+            </>
+          )}
         </div>
 
         {/* Right Side */}
