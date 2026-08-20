@@ -30,6 +30,7 @@ export function StandCanvas({
   standNumber,
   socialLinks = [],
   spots,
+  templateSpots = [],
   fullBleed = false,
 }: {
   standImageUrl?: string;
@@ -39,6 +40,16 @@ export function StandCanvas({
   standNumber?: string | null;
   socialLinks?: SocialLink[];
   spots: SpotAsset[];
+  /**
+   * Artwork for the FIXED template slots (src/lib/standTemplateSlots.ts).
+   *
+   * Kept separate from `spots` because those slot coordinates were measured off the pixels of
+   * DEFAULT_STAND_TEMPLATE specifically, so they are only correct while that image is the one
+   * actually rendering. This component is the only place that knows which background won —
+   * including after a custom one 404s and `imageFailed` flips — so the decision lives here
+   * rather than in the caller.
+   */
+  templateSpots?: SpotAsset[];
   /** Fill the size of its parent edge-to-edge instead of rendering as a rounded, bordered card —
    * use this for an immersive full-viewport booth view like the legacy lobby's stand display. */
   fullBleed?: boolean;
@@ -49,6 +60,8 @@ export function StandCanvas({
   // Fall back to the generic booth frame the moment the exhibitor's own template is missing or
   // fails to load, so the canvas never renders blank.
   const effectiveStandImage = standImageUrl && !imageFailed ? standImageUrl : DEFAULT_STAND_TEMPLATE;
+  // Template-slot coordinates only line up with the default frame — see the templateSpots prop.
+  const showTemplateSlots = effectiveStandImage === DEFAULT_STAND_TEMPLATE;
 
   return (
     <div
@@ -114,6 +127,21 @@ export function StandCanvas({
           ))}
         </div>
       )}
+
+      {showTemplateSlots &&
+        templateSpots.map((spot) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={`tpl-${spot.id}`}
+            src={spot.src}
+            alt={spot.title || "Stand asset"}
+            className="absolute object-contain drop-shadow-xl"
+            style={{ left: `${spot.x}%`, top: `${spot.y}%`, width: `${spot.width}%`, height: `${spot.height}%` }}
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
+          />
+        ))}
 
       {spots.map((spot) => (
         // eslint-disable-next-line @next/next/no-img-element

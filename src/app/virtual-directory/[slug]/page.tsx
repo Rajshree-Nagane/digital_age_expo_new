@@ -1,3 +1,4 @@
+import { STAND_TEMPLATE_SLOTS } from "@/lib/standTemplateSlots";
 import Link from "next/link";
 import { Store, Globe, Phone, Video, CalendarClock, Share2 } from "lucide-react";
 import { getPublicExhibitorStand } from "@/lib/services/exhibitorStand";
@@ -60,7 +61,25 @@ export default async function VirtualDirectoryStandPage({ params }: { params: Pr
     );
   }
 
-  const { exhibitor, zoneName, standImage, spots } = stand;
+  const { exhibitor, zoneName, standImage, spots, templateSlots } = stand;
+
+  /*
+   * The fixed template slots, turned into the same overlay shape as the DB hotspots.
+   *
+   * STAND_TEMPLATE_SLOTS carries percentage boxes (left/top/width/height) measured against the
+   * fallback stand background, which is exactly what SpotAsset expects — so no new rendering code
+   * is needed, only the coordinate lookup. StandCanvas decides whether to draw them, because only
+   * it knows whether that fallback background is the one that actually rendered.
+   */
+  const templateSpots = templateSlots
+    .map((slot, i) => {
+      const def = STAND_TEMPLATE_SLOTS.find((s) => s.key === slot.key);
+      const src = exhibitorAssetUrl(slot.url) || "";
+      if (!def || !src) return null;
+      return { id: i + 1, title: def.label, x: def.left, y: def.top, width: def.width, height: def.height, src };
+    })
+    .filter((s): s is NonNullable<typeof s> => s !== null);
+
   const resolvedStandImage = standImage
     ? standImage.startsWith("http") || standImage.startsWith("/")
       ? standImage
@@ -132,6 +151,7 @@ export default async function VirtualDirectoryStandPage({ params }: { params: Pr
           standNumber={exhibitor.stand_number}
           socialLinks={socialLinks}
           spots={spotAssets}
+          templateSpots={templateSpots}
           fullBleed
         />
         <Link

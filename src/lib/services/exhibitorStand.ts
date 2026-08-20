@@ -18,6 +18,8 @@ export interface ResolvedStand {
   zoneName: string;
   standImage: string;
   spots: ResolvedStandSpot[];
+  /** Fixed template-slot artwork, keyed by STAND_TEMPLATE_SLOTS.key. See the note where it is built. */
+  templateSlots: { key: string; url: string }[];
 }
 
 /**
@@ -99,7 +101,17 @@ export async function resolveExhibitorStand(exhibitor: any, eventId: number): Pr
     spots = await Promise.all(
       rawSpots.map(async (spot: any) => {
         try {
-          const asset = exAssets.find((a: any) => a.default_asset_id === spot.exhibitor_asset_id) || null;
+          // Both ids must actually be set. `a.default_asset_id === spot.exhibitor_asset_id` alone
+          // is true when both are null — and 2,869 of the 3,148 spot rows have a null
+          // exhibitor_asset_id, while every template-slot asset has a null default_asset_id. So
+          // the bare comparison matched every unassigned spot to the same arbitrary asset, which
+          // is why one panel appeared repeated across a stand instead of the real artwork.
+          const asset =
+            spot.exhibitor_asset_id == null
+              ? null
+              : exAssets.find(
+                  (a: any) => a.default_asset_id != null && a.default_asset_id === spot.exhibitor_asset_id
+                ) || null;
           const gallery = asset
             ? await prisma.find_event_lobby_asset_gallery.findMany({
                 where: { parent_asset_id: asset.id },
@@ -115,7 +127,39 @@ export async function resolveExhibitorStand(exhibitor: any, eventId: number): Pr
     // No spots resolved — canvas still shows with just the background image.
   }
 
-  return { zoneName, standImage, spots };
+  /*
+   * The fixed template slots (src/lib/standTemplateSlots.ts), keyed by `title`.
+   *
+   * These are a separate mechanism from the DB hotspots above: six boxes measured off the pixels
+   * of the fallback background, written by the editor's `update_template_asset` action. Until now
+   * only the editor read them, so artwork uploaded into a slot was invisible on the public booth —
+   * which is exactly the state the imported banner packs were in. The caller decides whether to
+   * draw them, because they are only meaningful while that fallback background is the one showing.
+   */
+  let templateSlots: { key: string; url: string }[] = [];
+  try {
+    const slotAssets = await prisma.find_event_lobby_layout_type_assets.findMany({
+      where: { exhibition_stand_id: exhibitor.id, event_id: eventId, asset_type: "template_slot" },
+      select: { id: true, title: true },
+    });
+    if (slotAssets.length) {
+      const galleries = await prisma.find_event_lobby_asset_gallery.findMany({
+        where: { parent_asset_id: { in: slotAssets.map((a: any) => a.id) } },
+        select: { parent_asset_id: true, asset_url: true },
+      });
+      const urlByAsset = new Map<number, string>();
+      for (const g of galleries) {
+        if (g.asset_url && !urlByAsset.has(g.parent_asset_id)) urlByAsset.set(g.parent_asset_id, g.asset_url);
+      }
+      templateSlots = slotAssets
+        .map((a: any) => ({ key: String(a.title ?? ""), url: urlByAsset.get(a.id) ?? "" }))
+        .filter((s: { key: string; url: string }) => Boolean(s.key && s.url));
+    }
+  } catch {
+    // Template slots are additive — failing to resolve them must not blank the stand.
+  }
+
+  return { zoneName, standImage, spots, templateSlots };
 }
 
 /** Public lookup for the read-only /virtual-directory/[slug] booth viewer. */
