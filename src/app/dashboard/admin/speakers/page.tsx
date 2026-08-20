@@ -19,7 +19,7 @@ export default async function AdminSpeakersPage() {
       rows={speakers}
       apiBasePath="/api/admin/speakers"
       statusActions={STATUS_ACTIONS}
-      extraColumn={{ label: "Topic", render: (row) => row.title || "—" }}
+      extraColumn={{ label: "Topic", field: "title" }}
     />
   );
 }

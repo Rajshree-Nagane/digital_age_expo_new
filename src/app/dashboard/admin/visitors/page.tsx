@@ -19,7 +19,7 @@ export default async function AdminVisitorsPage() {
       rows={visitors}
       apiBasePath="/api/admin/visitors"
       statusActions={STATUS_ACTIONS}
-      extraColumn={{ label: "Referral Code", render: (row) => row.referralCode || "—" }}
+      extraColumn={{ label: "Referral Code", field: "referralCode" }}
     />
   );
 }

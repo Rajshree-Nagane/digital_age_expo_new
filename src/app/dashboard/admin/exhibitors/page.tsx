@@ -19,7 +19,7 @@ export default async function AdminExhibitorsPage() {
       rows={exhibitors}
       apiBasePath="/api/admin/exhibitors"
       statusActions={STATUS_ACTIONS}
-      extraColumn={{ label: "Stand", render: (row) => row.standNumber || "—" }}
+      extraColumn={{ label: "Stand", field: "standNumber" }}
     />
   );
 }

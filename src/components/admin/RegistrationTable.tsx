@@ -40,7 +40,14 @@ interface RegistrationTableProps<T extends RegistrationRow> {
   rows: T[];
   apiBasePath: string;
   statusActions: StatusAction[];
-  extraColumn?: { label: string; render: (row: T) => React.ReactNode };
+  /**
+   * An extra column, described by the ROW FIELD to show — not by a render function.
+   *
+   * This is a Client Component, and a Server Component cannot hand it a callback: doing so threw
+   * "Functions cannot be passed directly to Client Components" and 500'd all four
+   * /dashboard/admin pages. A field name is serialisable, so it crosses the boundary fine.
+   */
+  extraColumn?: { label: string; field: keyof T & string };
 }
 
 export function RegistrationTable<T extends RegistrationRow>({
@@ -137,7 +144,11 @@ export function RegistrationTable<T extends RegistrationRow>({
                   <div>{row.email || "—"}</div>
                   <div className="text-indigo-950/50">{row.phone || ""}</div>
                 </td>
-                {extraColumn && <td className="px-4 py-3 text-indigo-950/80">{extraColumn.render(row)}</td>}
+                {extraColumn && (
+                  <td className="px-4 py-3 text-indigo-950/80">
+                    {String(row[extraColumn.field] ?? "").trim() || "—"}
+                  </td>
+                )}
                 <td className="px-4 py-3">
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-semibold ${

@@ -19,7 +19,7 @@ export default async function AdminSponsorsPage() {
       rows={sponsors}
       apiBasePath="/api/admin/sponsors"
       statusActions={STATUS_ACTIONS}
-      extraColumn={{ label: "Sponsor Type", render: (row) => row.sponsorType || "—" }}
+      extraColumn={{ label: "Sponsor Type", field: "sponsorType" }}
     />
   );
 }
