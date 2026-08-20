@@ -1,3 +1,4 @@
+import { nextAuthSecret } from "@/lib/auth/secret";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { verifyMemberCredentials } from "@/lib/services/member";
@@ -43,5 +44,5 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET || "findusonweb_nextauth_secret_key_2026",
+  secret: nextAuthSecret(),
 };

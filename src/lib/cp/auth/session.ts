@@ -15,6 +15,8 @@
  * dependency on purpose — this is the same idea as a JWS, hand-rolled small enough to
  * read in one sitting.
  */
+import { cpSessionSecret } from "@/lib/auth/secret";
+
 
 const COOKIE_NAME = "cp_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 8; // 8 hours
@@ -34,12 +36,9 @@ export interface CpSessionPayload {
 }
 
 function getSecret(): string {
-  const secret = process.env.CP_SESSION_SECRET;
-  if (!secret) {
-    // Mirrors lib/auth/options.ts's fallback pattern — replace this in production .env.
-    return "digitalexpo_cp_session_secret_change_me_2026";
-  }
-  return secret;
+  // See src/lib/auth/secret.ts: the previous hardcoded fallback was the live signing key in
+  // production, and this repository is public, so it was a published key.
+  return cpSessionSecret();
 }
 
 function base64UrlEncode(bytes: Uint8Array): string {
