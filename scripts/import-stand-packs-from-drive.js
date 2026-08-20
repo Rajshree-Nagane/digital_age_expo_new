@@ -44,9 +44,20 @@
  *  USAGE
  *      node scripts/import-stand-packs-from-drive.js            # dry run
  *      node scripts/import-stand-packs-from-drive.js --confirm  # writes
+ *      node scripts/import-stand-packs-from-drive.js --confirm --force
+ *                                                   # re-download slots already present
  *
- *  Re-runnable: each slot is replaced, never accumulated, exactly as the
- *  editor's update_template_asset action does.
+ *  INCREMENTAL BY DEFAULT, which matters because this is meant to be re-run on a
+ *  schedule to pick up newly-added packs. A slot whose asset already has a
+ *  gallery row pointing at a file that exists on disk is left alone: not
+ *  re-downloaded, and its filename not churned.
+ *
+ *  That last part is the reason this cannot be naively re-run. Filenames embed
+ *  `Date.now()` (matching the editor's own convention), so a blind re-run would
+ *  write 145 fresh files, orphan the previous 145, and grow the repository by
+ *  11 MB every single time. With the skip in place a run that finds nothing new
+ *  writes nothing at all. `--force` re-downloads and deletes the file it
+ *  replaces, so it does not orphan either.
  */
 
 require("dotenv").config();
@@ -57,6 +68,7 @@ const { Pool } = require("pg");
 const ROOT_FOLDER_ID = process.env.STAND_PACK_FOLDER_ID || "1bNFbp6VQFTE737GmzKxDok3JxAc2WvmJ";
 const EVENT_ID = 1474;
 const CONFIRM = process.argv.includes("--confirm");
+const FORCE = process.argv.includes("--force");
 const UPLOAD_DIR = path.join(__dirname, "..", "public", "images", "lobby_assets");
 
 /** Pack filename -> STAND_TEMPLATE_SLOTS key. Only the five that match by dimension. */
@@ -202,17 +214,39 @@ async function main() {
 
     fs.mkdirSync(UPLOAD_DIR, { recursive: true });
     let installed = 0;
+    let skipped = 0;
     let bytes = 0;
     const failures = [];
 
     for (const p of plan) {
       let perExhibitor = 0;
+      let perExhibitorSkipped = 0;
       for (const panel of p.panels) {
         const stem = panel.name.replace(/\.(png|jpg|jpeg)$/i, "").toLowerCase();
         const slotKey = PANEL_TO_SLOT[stem];
         if (!slotKey) continue; // 02-table-banner / 07-bottom-right — see header
 
         try {
+          // Already installed? Leave it completely alone — see the note on filename churn in the
+          // header. "Installed" means the asset row has a gallery row whose file is really on disk;
+          // a DB row pointing at a missing file counts as absent and gets re-fetched.
+          if (!FORCE) {
+            const present = await pool.query(
+              `SELECT g.asset_url
+                 FROM find_event_lobby_layout_type_assets a
+                 JOIN find_event_lobby_asset_gallery g ON g.parent_asset_id = a.id
+                WHERE a.exhibition_stand_id = $1 AND a.event_id = $2 AND a.title = $3
+                LIMIT 1`,
+              [p.exhibitorId, EVENT_ID, slotKey]
+            );
+            const url = present.rows[0]?.asset_url;
+            if (url && fs.existsSync(path.join(UPLOAD_DIR, url))) {
+              skipped++;
+              perExhibitorSkipped++;
+              continue;
+            }
+          }
+
           // Upsert the slot's asset row, mirroring update_template_asset in
           // /api/members/stand-assets/route.ts so the editor sees its own shape.
           const existing = await pool.query(
@@ -238,7 +272,18 @@ async function main() {
           fs.writeFileSync(path.join(UPLOAD_DIR, filename), buf);
           bytes += buf.length;
 
-          // One image per slot — replace rather than accumulate.
+          // One image per slot — replace rather than accumulate. Delete the file being replaced
+          // too: filenames carry a timestamp, so keeping the old row's file would leave an orphan
+          // in the repository on every --force run.
+          const old = await pool.query(
+            `SELECT asset_url FROM find_event_lobby_asset_gallery WHERE parent_asset_id = $1`,
+            [assetId]
+          );
+          for (const row of old.rows) {
+            if (!row.asset_url) continue;
+            const stale = path.join(UPLOAD_DIR, row.asset_url);
+            if (fs.existsSync(stale)) fs.unlinkSync(stale);
+          }
           await pool.query(`DELETE FROM find_event_lobby_asset_gallery WHERE parent_asset_id = $1`, [assetId]);
           await pool.query(
             `INSERT INTO find_event_lobby_asset_gallery (parent_asset_id, asset_url) VALUES ($1,$2)`,
@@ -255,10 +300,28 @@ async function main() {
           failures.push(`${p.business} / ${slotKey}: ${err.message}`);
         }
       }
-      console.log(`  ${p.business.padEnd(38)} ${perExhibitor}/${slotCount} slot(s)`);
+      // Stay quiet about exhibitors that were already complete — on a scheduled run the whole
+      // point is that only genuinely new packs produce output.
+      if (perExhibitor > 0) {
+        console.log(
+          `  ${p.business.padEnd(38)} ${perExhibitor} new slot(s)` +
+            (perExhibitorSkipped ? `, ${perExhibitorSkipped} already present` : "")
+        );
+      }
     }
 
-    console.log(`\nInstalled ${installed} slot image(s) across ${plan.length} exhibitor(s), ${(bytes / 1048576).toFixed(1)} MB written`);
+    // Phrased so a scheduled run's output says plainly whether anything changed — "Installed 0"
+    // reads like a failure at a glance, which is the wrong signal for the normal quiet case.
+    if (installed === 0) {
+      console.log(
+        `\nNOTHING NEW — all ${skipped} slot(s) across ${plan.length} exhibitor(s) were already installed.`
+      );
+    } else {
+      console.log(
+        `\nINSTALLED ${installed} NEW slot image(s), ${(bytes / 1048576).toFixed(1)} MB written` +
+          (skipped ? `; ${skipped} already present and left untouched` : "")
+      );
+    }
     if (failures.length) {
       console.log(`${failures.length} failure(s):`);
       for (const f of failures) console.log(`  ${f}`);
