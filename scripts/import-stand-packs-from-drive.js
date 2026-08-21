@@ -69,6 +69,16 @@ const ROOT_FOLDER_ID = process.env.STAND_PACK_FOLDER_ID || "1bNFbp6VQFTE737GmzKx
 const EVENT_ID = 1474;
 const CONFIRM = process.argv.includes("--confirm");
 const FORCE = process.argv.includes("--force");
+/**
+ * `--create-missing` — create a minimal exhibitor row for a pack whose company has none.
+ *
+ * Opt-in, and deliberately not the default. Artwork arrives for companies that were never in the
+ * onboarding sheet, so there is nothing to attach it to; but inventing an exhibitor is a content
+ * decision, not a mechanical one. The row it creates carries only the company name from the
+ * pack's README — no email, phone or website, because the pack does not contain them — so each
+ * one still needs completing in the CP.
+ */
+const CREATE_MISSING = process.argv.includes("--create-missing");
 const UPLOAD_DIR = path.join(__dirname, "..", "public", "images", "lobby_assets");
 
 /** Pack filename -> STAND_TEMPLATE_SLOTS key. Only the five that match by dimension. */
@@ -95,8 +105,14 @@ const NAME_OVERRIDES = {
   "levy uk + ireland": "Levy",
 };
 
-/** No find_event_exhibitor row exists for these, so there is nothing to attach artwork to. */
-const NO_EXHIBITOR = new Set(["kn comms"]);
+/**
+ * Companies to never attach artwork to, even though a pack exists.
+ *
+ * Empty now. "KN Comms" lived here while it had no exhibitor row; it has one since the
+ * --create-missing run, so keeping the entry would have made plain runs skip a company that is
+ * now perfectly matchable.
+ */
+const NO_EXHIBITOR = new Set([]);
 
 const PG_URL = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
 if (!PG_URL) {
@@ -177,19 +193,60 @@ async function main() {
       if (k && !byNorm.has(k)) byNorm.set(k, e);
     }
 
+    /**
+     * Creates the minimal exhibitor row a pack needs in order to have somewhere to attach.
+     *
+     * Only the company name is available — the pack's README carries no email, phone or website —
+     * so the row is deliberately sparse and needs completing in the CP. `batch_number` records
+     * where it came from, the same way the onboarding-sheet import does, so these are
+     * distinguishable from real registrations later. Status matches the other exhibitors on this
+     * event ('active'), because the public stand viewer refuses to render anything else.
+     */
+    async function createExhibitor(company) {
+      const slugBase = company
+        .toLowerCase()
+        .replace(/&/g, " and ")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      const { rows: taken } = await pool.query(
+        `SELECT friendly_url FROM find_event_exhibitor WHERE friendly_url LIKE $1`,
+        [`${slugBase}%`]
+      );
+      const used = new Set(taken.map((r) => r.friendly_url));
+      let slug = slugBase;
+      let n = 2;
+      while (used.has(slug)) slug = `${slugBase}-${n++}`;
+
+      const { rows } = await pool.query(
+        `INSERT INTO find_event_exhibitor
+           (event_id, business, name, first_name, last_name, email, phone, website,
+            friendly_url, status, date, batch_number, listing_id, user_id)
+         VALUES ($1,$2,'','','','','','',$3,'active',NOW(),'STAND PACK',0,0)
+         RETURNING id, business`,
+        [EVENT_ID, company, slug]
+      );
+      return rows[0];
+    }
+
     const plan = [];
     const unmatched = [];
+    const created = [];
     const seenExhibitor = new Set();
     for (const p of packs) {
       const lower = p.company.toLowerCase();
-      if (NO_EXHIBITOR.has(lower)) {
+      if (NO_EXHIBITOR.has(lower) && !CREATE_MISSING) {
         unmatched.push(`${p.company} (no exhibitor record)`);
         continue;
       }
       const target = NAME_OVERRIDES[lower] ?? p.company;
-      const match = byNorm.get(norm(target));
+      let match = byNorm.get(norm(target));
+      if (!match && CREATE_MISSING && CONFIRM) {
+        match = await createExhibitor(p.company);
+        byNorm.set(norm(match.business), match);
+        created.push(match.business);
+      }
       if (!match) {
-        unmatched.push(p.company);
+        unmatched.push(p.company + (CREATE_MISSING ? " (would be created; needs --confirm)" : ""));
         continue;
       }
       if (seenExhibitor.has(match.id)) {
@@ -202,6 +259,10 @@ async function main() {
 
     console.log(`\nMatched ${plan.length} exhibitor(s); ${unmatched.length} pack(s) unmatched`);
     for (const u of unmatched) console.log(`  unmatched: ${u}`);
+    if (created.length) {
+      console.log(`\nCreated ${created.length} exhibitor record(s) from pack names — complete these in the CP:`);
+      for (const c of created) console.log(`  + ${c}`);
+    }
 
     const slotCount = Object.keys(PANEL_TO_SLOT).length;
     if (!CONFIRM) {
