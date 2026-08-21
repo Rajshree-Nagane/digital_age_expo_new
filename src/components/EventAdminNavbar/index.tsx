@@ -115,6 +115,15 @@ const TAB_ORDER: { code: string; label: string }[] = [
   { code: "LTGMVB", label: "Manage Virtual Booth" },
   { code: "LGTBUY", label: "Manage Event Orders" },
   { code: "LTGDO",  label: "Download Orders" },
+  // The awards-platform groups. This table serves awards sites as well as expos, and these three
+  // codes were absent from the map — so they fell through to being displayed raw. Labels are taken
+  // from what each group actually contains:
+  //   LGTCB   Configure Industry / Regions / Categories / Questions / Schedule / Location Eligibility
+  //   LGTMAN  Manage Nominations / Judges / Applicants / Shortlists / Finalists / Winners
+  //   LTGVAN  View my Nominations / Judging board / Award Ceremony / Winners Leaderboard
+  { code: "LGTCB",  label: "Configure Awards" },
+  { code: "LGTMAN", label: "Manage Awards" },
+  { code: "LTGVAN", label: "Awards & Judging" },
 ];
 
 /**
@@ -145,6 +154,26 @@ function canonicalTabCode(code: string, label: string): string {
       normaliseKey(tab.label) === l,
   );
   return match ? match.code : code;
+}
+
+/**
+ * The text to actually show on a tab.
+ *
+ * getLiveMemberMenu() sets a tab's `label` from `find_event_menus.menu_group`, and that column
+ * stores CODES ("LGTS", "LGTMM", "LTGVAN"...) — there is no human-readable group name anywhere in
+ * the table, and the codes are not in common_type or independent_mst either. So rendering
+ * `tab.label` directly put raw codes on screen, which is what the member area was showing.
+ *
+ * TAB_ORDER is the only place those codes are given names, so the label is resolved through it.
+ * Anything not in the map falls back to the raw value rather than being hidden — a group that
+ * appears as a code is a missing map entry, and that should be visible, not silently blank.
+ */
+function tabDisplayLabel(code: string, label: string): string {
+  const key = normaliseKey(label);
+  const match = TAB_ORDER.find(
+    (tab) => normaliseKey(tab.code) === key || normaliseKey(tab.code) === normaliseKey(code),
+  );
+  return match ? match.label : label;
 }
 
 /* ============================================================
@@ -686,7 +715,7 @@ export default function EventAdminNavbar({
               onClick={() =>
                 setActiveTab(tab.code)
               }
-              title={tab.label}
+              title={tabDisplayLabel(tab.code, tab.label)}
               className={`
                 flex
                 min-w-[100px]
@@ -743,7 +772,7 @@ export default function EventAdminNavbar({
               />
 
               <span className="truncate">
-                {tab.label}
+                {tabDisplayLabel(tab.code, tab.label)}
               </span>
             </button>
           );
@@ -799,7 +828,7 @@ export default function EventAdminNavbar({
                 ${currentTabColors.badgeBg}
               `}
             >
-              {current.label}
+              {tabDisplayLabel(current.code, current.label)}
             </span>
 
             <span className="text-xs font-medium text-zinc-500">
