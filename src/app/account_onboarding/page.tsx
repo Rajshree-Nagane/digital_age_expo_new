@@ -1,3 +1,4 @@
+import { numericParam } from "@/lib/searchParams";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/options";
 import { getDomain } from "@/lib/services/domain";
@@ -18,7 +19,7 @@ export default async function AccountOnboardingPage({
 
   const resolvedParams = searchParams ? await searchParams : {};
   const domain = await getDomain();
-  const eventId = resolvedParams.event_id ? Number(resolvedParams.event_id) : (domain?.event_id ?? 852);
+  const eventId = numericParam(resolvedParams.event_id, domain?.event_id ?? 852);
 
   // Not used for gating on this public page — kept only so the onboarding wizard can be
   // extended later to prefill/save against the visitor's event context if they're signed in.

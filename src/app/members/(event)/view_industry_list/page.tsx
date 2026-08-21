@@ -1,3 +1,4 @@
+import { optionalNumericParam } from "@/lib/searchParams";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/options";
@@ -31,7 +32,7 @@ export default async function ViewIndustryListPage({
   };
 
   const resolvedParams = searchParams ? await searchParams : {};
-  const queryEventId = resolvedParams.event_id ? Number(resolvedParams.event_id) : undefined;
+  const queryEventId = optionalNumericParam(resolvedParams.event_id);
 
   const domain = await getDomain();
   const eventId = queryEventId || domain?.event_id || DEFAULT_EVENT_ID;

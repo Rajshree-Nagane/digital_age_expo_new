@@ -1,3 +1,4 @@
+import { optionalNumericParam } from "@/lib/searchParams";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/options";
 import { getDomain } from "@/lib/services/domain";
@@ -14,7 +15,7 @@ export default async function EventLobbyVisitorEnquiriesPage({
   searchParams?: Promise<{ event_id?: string }>;
 }) {
   const resolvedParams = searchParams ? await searchParams : {};
-  const queryEventId = resolvedParams.event_id ? Number(resolvedParams.event_id) : undefined;
+  const queryEventId = optionalNumericParam(resolvedParams.event_id);
 
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id ? Number(session.user.id) : -30;

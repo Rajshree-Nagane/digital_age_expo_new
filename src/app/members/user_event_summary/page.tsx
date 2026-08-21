@@ -1,3 +1,4 @@
+import { optionalNumericParam } from "@/lib/searchParams";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import {
@@ -73,7 +74,7 @@ export default async function UserEventSummaryPage({
   searchParams?: Promise<{ event_id?: string }>;
 }) {
   const resolvedParams = searchParams ? await searchParams : {};
-  const queryEventId = resolvedParams.event_id ? Number(resolvedParams.event_id) : undefined;
+  const queryEventId = optionalNumericParam(resolvedParams.event_id);
 
   const session = await getServerSession(authOptions);
   // Default to demo Organiser/Exhibitor account (-30) if no active session cookie in iframe

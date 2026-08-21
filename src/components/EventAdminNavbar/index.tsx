@@ -255,6 +255,24 @@ function resolveIcon(name: string): LucideIcon {
    ADD EVENT ID TO URL
 ============================================================ */
 
+/**
+ * Puts the real event id into a menu link.
+ *
+ * `find_event_menus.link` still holds the legacy PHP template strings, complete with the
+ * placeholder PHP used to interpolate — 14 rows contain a literal `$id`, e.g.
+ *
+ *     event_lobby_layout_manager?action=view_my_booth&event_id=$id
+ *
+ * Nothing substituted it, and this function then appended its own parameter, producing
+ * `?action=view_my_booth&event_id=$id&event_id=1474`. A repeated query parameter reaches a
+ * Server Component as an ARRAY, so `Number(searchParams.event_id)` evaluated to NaN, the page
+ * queried Prisma with NaN and rendered "Something went wrong" — which is exactly what "View My
+ * Booth" was doing.
+ *
+ * So: substitute the placeholder if present, and only append when the link does not already
+ * carry an event_id. Fixing it here fixes all 14 rows at once, and leaves the database's legacy
+ * strings untouched.
+ */
 function withEventId(
   href: string,
   eventId: number | string
@@ -263,9 +281,16 @@ function withEventId(
     return href;
   }
 
-  const separator = href.includes("?") ? "&" : "?";
+  // $id and ${id} are both forms PHP would have interpolated.
+  const substituted = href.replace(/\$\{?id\}?/g, String(eventId));
 
-  return `${href}${separator}event_id=${eventId}`;
+  if (/[?&]event_id=/.test(substituted)) {
+    return substituted;
+  }
+
+  const separator = substituted.includes("?") ? "&" : "?";
+
+  return `${substituted}${separator}event_id=${eventId}`;
 }
 
 /* ============================================================

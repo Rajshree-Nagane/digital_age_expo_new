@@ -1,3 +1,4 @@
+import { optionalNumericParam } from "@/lib/searchParams";
 import { getServerSession } from "next-auth";
 import { Store } from "lucide-react";
 import { authOptions } from "@/lib/auth/options";
@@ -23,7 +24,7 @@ export default async function ManageStandAssetsPage({ searchParams }: PageProps)
   const defaultEventId = domain?.event_id ?? 852; // Default to requested 852 event_id
 
   const resolvedParams = searchParams ? await searchParams : {};
-  const queryEventId = resolvedParams.event_id ? Number(resolvedParams.event_id) : null;
+  const queryEventId = optionalNumericParam(resolvedParams.event_id) ?? null;
   const eventId = queryEventId || defaultEventId;
   const exId = resolvedParams.ex_id || "";
 

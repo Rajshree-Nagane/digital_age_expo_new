@@ -1,4 +1,5 @@
 // app/members/event_lobby_layout_manager/page.tsx
+import { numericParam } from "@/lib/searchParams";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -59,7 +60,7 @@ export default async function EventLobbyLayoutManagerPage({
 
   const resolvedParams = searchParams ? await searchParams : {};
   const domain = await getDomain();
-  const eventId = resolvedParams.event_id ? Number(resolvedParams.event_id) : (domain?.event_id ?? 852);
+  const eventId = numericParam(resolvedParams.event_id, domain?.event_id ?? 852);
 
   const context = (await getEventMemberContext(eventId, Number(session.user.id))) ?? {
     role: "organiser" as const,

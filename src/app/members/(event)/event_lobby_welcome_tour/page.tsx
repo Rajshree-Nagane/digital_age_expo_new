@@ -1,3 +1,4 @@
+import { numericParam } from "@/lib/searchParams";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { Home, ChevronRight, Compass, Sparkles, PlayCircle } from "lucide-react";
@@ -38,7 +39,7 @@ export default async function EventLobbyWelcomeTourPage({
 
   const resolvedParams = searchParams ? await searchParams : {};
   const domain = await getDomain();
-  const eventId = resolvedParams.event_id ? Number(resolvedParams.event_id) : (domain?.event_id ?? 852);
+  const eventId = numericParam(resolvedParams.event_id, domain?.event_id ?? 852);
 
   const context = (await getEventMemberContext(eventId, Number(session.user.id))) ?? {
     role: "organiser" as const,
