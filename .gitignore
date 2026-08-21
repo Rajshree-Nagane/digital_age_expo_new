@@ -45,5 +45,6 @@ next-env.d.ts
 # local full database dumps (multi-GB — see database/README.md)
 /database/*.sql
 /database/*.json
+/database/*.csv
 /database/*.7z
 /database/*.zip
